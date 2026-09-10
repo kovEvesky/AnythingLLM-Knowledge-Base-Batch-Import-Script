@@ -1,0 +1,50 @@
+# ===== 敏感凭据（绝不入库） =====
+apikey.txt
+**/apikey.txt
+*.key
+*.pem
+*.secret
+.env
+.env.*
+!*.env.example
+
+# 若 config.json 未来可能写入真实 token/密钥，应改用 config.local.json 模式
+config.local.json
+**/config.local.json
+
+# ===== 备份与临时文件 =====
+*.bak
+*.tmp
+*.old
+*.orig
+*~
+~$*
+*.swp
+*.swo
+
+# ===== 运行日志与垃圾回收 =====
+tools/logs/
+tools/_trash/
+*.log
+!CHANGELOG.md
+
+# ===== 测试生成物（可选） =====
+# 测试报告是运行产物，建议不提交；报告模板仍保留
+tests/results/
+tests/tmp/
+
+# ===== Windows / macOS 系统文件 =====
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+
+# ===== IDE / 编辑器 =====
+.vscode/
+.idea/
+*.suo
+*.user
+
+# ===== 其他 =====
+node_modules/
