@@ -1,0 +1,102 @@
+﻿==============================================
+ AnythingLLM 嵌入工具 全面测试 v1.5（冒烟先行+负载控制）
+ 项目: D:\WSL\AI-tools\003anythingllmtools
+ 工作区 slug: wsl
+ 负载开关: RunHeavyChat=False Warmup=False SmokeOnly=False
+==============================================
+[0/4] 前置检查：AnythingLLM 服务与 API Key...
+  服务可达 OK
+  工作区存在 OK（共 6 个工作区）
+[1/4] 冒烟测试（最轻量先行验证）...
+
+--- 冒烟测试（最轻量，先行确认功能正常）---
+  [OK] S1 AnythingLLM 服务可达
+  [OK] S2 API Key 鉴权通过
+  [OK] S3 工作区存在 (wsl)
+  [OK] S4 最小文件上传+嵌入 exit=0（1s）
+  [OK] S5 嵌入状态确认（1 条记录）
+--- 冒烟通过，耗时 1.3s ---
+[2/4] 准备测试文件...
+  测试文件已生成到 tests/inputs/
+[3/4] 执行测试用例...
+[PASS] A1 embed.ps1 编码=UTF8-BOM 且含 V1.0 (0.3s)
+[PASS] A2 BAT 入口=ANSI 无 BOM+CRLF (0s)
+[PASS] A3 config.json 可解析 (0s)
+[PASS] A4 关键配置齐全 (0s)
+[PASS] A5 apikey.txt 可读非空 (0s)
+[PASS] A6 tools/ 目录结构齐全 (0s)
+[PASS] A7 Banner 含 V1.0 徽章与副标题 (0s)
+[PASS] A8 汇总盒含总耗时 (0s)
+[PASS] A9 菜单主题唯一(workspace×1 folder×1) (0s)
+[PASS] A10 新建工作区函数存在 (0s)
+[PASS] A11 重名提示重新命名(工作区+文件夹) (0s)
+[PASS] A12 逐项模式新建工作区刷新列表 (0s)
+[PASS] A13 文件夹选择标题上下文 (0s)
+[PASS] A14 config 扩展名 15 种含 7 新格式 (0s)
+  [setup] API 直传 9 文件（免嵌入）...
+    OK  t_basic.txt  custom-documents/t_basic.txt-7df4757c-e335-4508-bced-cf57e3de1b07.json
+    OK  t_中文文档.txt  custom-documents/t_.txt-a9accd0a-4736-4ef1-a02e-82e86395579c.json
+    OK  t_dup.txt  custom-documents/t_dup.txt-807ce561-6869-4f0f-bb10-8147668d074f.json
+    OK  t_multi_a.txt  custom-documents/t_multi_a.txt-94d5abbb-8a84-4b76-97ed-e135c388f820.json
+    OK  t_multi_b.txt  custom-documents/t_multi_b.txt-57c8588d-355b-4bc7-8790-99853b50a35b.json
+    OK  t_multi_c.txt  custom-documents/t_multi_c.txt-0db0fa92-f68e-4d2d-93a0-c0bac244273c.json
+    OK  t_fmt.json  custom-documents/t_fmt.json-a096cebb-8b95-4c2f-84f3-e4b4e8fb9983.json
+    OK  t_fmt.html  custom-documents/t_fmt.html-14b57bdd-dc53-4419-b52e-b95b21c971a6.json
+    OK  t_fmt.org  custom-documents/t_fmt.org-15ce0814-0259-4c55-9147-4bcb29cc3af7.json
+[PASS] D1 单 txt 上传成功(Setup) (0s)
+[PASS] D2 中文文件名上传(Setup) (0s)
+[PASS] D3 多文件(3)一次上传(Setup) (0s)
+  [setup] 嵌入 t_basic + t_dup + t_fmt×3（update-embeddings，5 文件一次调用）...
+  [setup] 嵌入完成? True | t_basic=1 t_dup=1
+[PASS] K5 新格式 json/html/org 嵌入验证 (0s)
+  [X1] 批量4文件嵌入: PASS | 耗时 0.5s
+[PASS] X1 批量4文件直传+一次嵌入吞吐 (0.5s)
+[PASS] B1 --help 输出用法 exit=0 (0.3s)
+[PASS] B2 -h 输出用法 exit=0 (0.3s)
+[PASS] B3 无参数提示用法(exit!=0) (0.3s)
+[PASS] B4 文件不存在报错 exit=1 (0.4s)
+[PASS] B5 未知开关不挂死 (0.4s)
+[PASS] B6 目录作为输入被拒绝 (0.4s)
+[PASS] C1 服务探活+CLI 可用(轻量) (0.3s)
+[PASS] C2 --diagnose 输出诊断不阻断 (1.7s)
+[PASS] C3 服务不可达友好报错 exit=1 (11.9s)
+[PASS] C4 config 缺失时默认配置可用 (0.3s)
+[PASS] K1 新建工作区 API 创建成功 (0s)
+[PASS] K2 新建工作区出现在列表 (0s)
+[PASS] K3 新建工作区删除后消失 (0s)
+[PASS] K4 新建/删除文件夹 API (0s)
+[PASS] D4 不支持扩展名被拒绝 (0.4s)
+[PASS] D5 空文件行为明确不崩溃 (0.4s)
+[PASS] D6 重复上传非交互自动跳过不新增 (0.5s)
+[PASS] D7 超大文件被拒绝 (0.4s)
+[PASS] E2 无效 slug 报错 exit=1 (0.5s)
+[PASS] E3 非交互无 slug 明确提示不卡 (0.5s)
+[PASS] E4 嵌入后文档在库且 metadata 完整 (0s)
+[SKIP] E5 检索命中(LLM chat) (0s)
+      -> 默认跳过重负载 LLM 用例，加 -RunHeavyChat 执行
+
+[PASS] F1 t_* 测试文档删除成功 (0s)
+[PASS] F2 删除后无 t_ 残留 (0s)
+[PASS] G1 全流程非交互无卡死 exit=0 (1s)
+[PASS] G3 非交互 --help 正常 (0.3s)
+[PASS] T1 BAT 无参数提示 exit=2 (0s)
+[PASS] T2 BAT 参数透传全流程 exit=0 (1.1s)
+[PASS] H1 运行生成 jsonl 日志 (0s)
+[PASS] H2 --clean-logs 清理过期日志 (0.4s)
+[PASS] H3 连续运行稳定(1嵌入+2轻量) (0s)
+[PASS] I1 无 System.Net.Http 加载错误 (1s)
+[PASS] I2 无 HttpClient.Timeout 异常 (1s)
+[PASS] I3 中文输出可读 (1s)
+[PASS] I4 退出码符合规范 0/1/2/3 (1s)
+[PASS] W1 清理后正式文档未被误删 (0s)
+清理文档库中的 t_* 测试文档...
+workspace                                                                                                              
+---------                                                                                                              
+@{id=33; name=wsl; slug=wsl; vectorTag=; createdAt=2026-09-10T05:55:43.862Z; openAiTemp=; openAiHistory=20; lastUpda...
+@{id=33; name=wsl; slug=wsl; vectorTag=; createdAt=2026-09-10T05:55:43.862Z; openAiTemp=; openAiHistory=20; lastUpda...
+  t_* 残留: 0
+
+==============================================
+汇总: PASS=54 FAIL=0 SKIP=1 总耗时=31.1s
+报告已写入: D:\WSL\AI-tools\003anythingllmtools\tests\results\report-20260910_141420.txt
+==============================================

@@ -1,0 +1,73 @@
+﻿AnythingLLM 嵌入工具 全面测试报告 (v1.2)
+时间: 2026-09-10 14:14:20
+项目: D:\WSL\AI-tools\003anythingllmtools | 工作区: wsl
+负载开关: RunHeavyChat=False Warmup=False
+总耗时: 31.1s
+-----------------------------------
+PASS A1 embed.ps1 编码=UTF8-BOM 且含 V1.0 exit=0 0.3s 检查 BOM 与版本标识
+PASS A2 BAT 入口=ANSI 无 BOM+CRLF exit=-1 0s 检查 BOM 与换行
+PASS A3 config.json 可解析 exit=-1 0s 去注释后 ConvertFrom-Json 成功
+PASS A4 关键配置齐全 exit=-1 0s baseUrl/超时/扩展名/大小
+PASS A5 apikey.txt 可读非空 exit=-1 0s key 长度 31
+PASS A6 tools/ 目录结构齐全 exit=-1 0s embed.ps1/bat/config/README/logs
+PASS A7 Banner 含 V1.0 徽章与副标题 exit=-1 0s 检查 Write-Banner（V1.0 徽章+副标题）
+PASS A8 汇总盒含总耗时 exit=-1 0s 检查 Write-SummaryBox（总耗时行）
+PASS A9 菜单主题唯一(workspace×1 folder×1) exit=-1 0s workspace=1 folder=1 重复=0
+PASS A10 新建工作区函数存在 exit=-1 0s 检查 New-Workspace/Select-Workspace
+PASS A11 重名提示重新命名(工作区+文件夹) exit=-1 0s 出现次数=2（应≥2）
+PASS A12 逐项模式新建工作区刷新列表 exit=-1 0s 检查 Select-Workspace 返回后并入列表
+PASS A13 文件夹选择标题上下文 exit=-1 0s 检查 Resolve-FolderSelection -Title 透传
+PASS A14 config 扩展名 15 种含 7 新格式 exit=-1 0s 实际: 15 种, 缺=
+PASS D1 单 txt 上传成功(Setup) exit=-1 0s 上传=True location=True
+PASS D2 中文文件名上传(Setup) exit=-1 0s location=True
+PASS D3 多文件(3)一次上传(Setup) exit=-1 0s a/b/c location=True
+PASS K5 新格式 json/html/org 嵌入验证 exit=-1 0s 嵌入=True 文档数=6/3
+PASS X1 批量4文件直传+一次嵌入吞吐 exit=-1 0.5s 上传=True 嵌入=True 耗时=0.5s
+PASS B1 --help 输出用法 exit=0 exit=0 0.3s exit=0
+PASS B2 -h 输出用法 exit=0 exit=0 0.3s exit=0
+PASS B3 无参数提示用法(exit!=0) exit=2 0.3s exit=2 timeout=False
+PASS B4 文件不存在报错 exit=1 exit=1 0.4s exit=1
+PASS B5 未知开关不挂死 exit=2 0.4s exit=2 timeout=False
+PASS B6 目录作为输入被拒绝 exit=1 0.4s exit=1
+PASS C1 服务探活+CLI 可用(轻量) exit=0 0.3s alive=System.Object[] help_exit=0
+PASS C2 --diagnose 输出诊断不阻断 exit=0 1.7s exit=0 timeout=False
+PASS C3 服务不可达友好报错 exit=1 exit=1 11.9s exit=1 timeout=False
+PASS C4 config 缺失时默认配置可用 exit=0 0.3s exit=0 timeout=False
+PASS K1 新建工作区 API 创建成功 exit=-1 0s slug=t_api_141406
+PASS K2 新建工作区出现在列表 exit=-1 0s slug=t_api_141406
+PASS K3 新建工作区删除后消失 exit=-1 0s slug=t_api_141406
+PASS K4 新建/删除文件夹 API exit=-1 0s name=t_fld_141406
+PASS D4 不支持扩展名被拒绝 exit=1 0.4s exit=1 timeout=False
+PASS D5 空文件行为明确不崩溃 exit=1 0.4s exit=1 timeout=False
+PASS D6 重复上传非交互自动跳过不新增 exit=0 0.5s exit=0 timeout=False 重传前=1 重传后=1
+PASS D7 超大文件被拒绝 exit=1 0.4s exit=1 timeout=False
+PASS E2 无效 slug 报错 exit=1 exit=1 0.5s exit=1 timeout=False
+PASS E3 非交互无 slug 明确提示不卡 exit=1 0.5s exit=1 timeout=False
+PASS E4 嵌入后文档在库且 metadata 完整 exit=-1 0s 文档数=1 metadata匹配=True
+SKIP E5 检索命中(LLM chat) exit=-1 0s 默认跳过重负载 LLM 用例，加 -RunHeavyChat 执行
+PASS F1 t_* 测试文档删除成功 exit=-1 0s 删前=12 删后=0
+PASS F2 删除后无 t_ 残留 exit=-1 0s 残留: 
+PASS G1 全流程非交互无卡死 exit=0 exit=0 1s exit=0 timeout=False
+PASS G3 非交互 --help 正常 exit=0 0.3s exit=0 timeout=False
+PASS T1 BAT 无参数提示 exit=2 exit=2 0s exit=2 timeout=False
+PASS T2 BAT 参数透传全流程 exit=0 exit=0 1.1s exit=0 timeout=False
+PASS H1 运行生成 jsonl 日志 exit=-1 0s 前=2 后=2
+PASS H2 --clean-logs 清理过期日志 exit=0 0.4s 旧日志已删=True exit=0
+PASS H3 连续运行稳定(1嵌入+2轻量) exit=0 0s 退出码序列: 0,0,0
+PASS I1 无 System.Net.Http 加载错误 exit=0 1s 复用 G1 输出检查
+PASS I2 无 HttpClient.Timeout 异常 exit=0 1s 复用 G1 输出检查
+PASS I3 中文输出可读 exit=0 1s 复用 G1 输出检查
+PASS I4 退出码符合规范 0/1/2/3 exit=0 1s exit=0
+PASS W1 清理后正式文档未被误删 exit=-1 0s 基线=0 现存=0: 
+-----------------------------------
+PASS=54 FAIL=0 SKIP=1 总计=55
+-----------------------------------
+系统库残留统计:
+  custom-documents 中 t_* 残留文件: 32 个（无法经 API 物理删除，见已知限制 2）
+-----------------------------------
+已知限制与建议:
+  1) system/remove-documents 返回 success 但不物理删除（实测）→ 清理一律用 update-embeddings deletes 解除关联
+  2) 系统文档库测试残留无法经 API 清理，如需彻底清理需在 WSL 中人工处理数据目录
+  3) LLM chat 检索（E5）默认跳过：本机 Ollama qwen2.5:14b 推理慢，需 -RunHeavyChat 显式开启
+  4) embed.ps1 已修复 4 处：验证字段 docpath / 非交互无 slug exit=1 / MaxFileSizeMB 用 double / 重复检测改 filename 前缀匹配
+  5) 备份目录：003anythingllmtools_backup_<时间戳>（含 .git 与全部文件）

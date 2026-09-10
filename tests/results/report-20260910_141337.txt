@@ -1,0 +1,30 @@
+﻿AnythingLLM 嵌入工具 全面测试报告 (v1.2)
+时间: 2026-09-10 14:13:37
+项目: D:\WSL\AI-tools\003anythingllmtools | 工作区: wsl
+负载开关: RunHeavyChat=False Warmup=False
+总耗时: 31.2s
+-----------------------------------
+PASS A7 Banner 含 V1.0 徽章与副标题 exit=-1 0s 检查 Write-Banner（V1.0 徽章+副标题）
+PASS A8 汇总盒含总耗时 exit=-1 0s 检查 Write-SummaryBox（总耗时行）
+PASS A9 菜单主题唯一(workspace×1 folder×1) exit=-1 0s workspace=1 folder=1 重复=0
+PASS A10 新建工作区函数存在 exit=-1 0s 检查 New-Workspace/Select-Workspace
+PASS A11 重名提示重新命名(工作区+文件夹) exit=-1 0s 出现次数=2（应≥2）
+PASS A12 逐项模式新建工作区刷新列表 exit=-1 0s 检查 Select-Workspace 返回后并入列表
+PASS A13 文件夹选择标题上下文 exit=-1 0s 检查 Resolve-FolderSelection -Title 透传
+PASS A14 config 扩展名 15 种含 7 新格式 exit=-1 0s 实际: 15 种, 缺=
+PASS K1 新建工作区 API 创建成功 exit=-1 0s slug=t_api_141323
+PASS K2 新建工作区出现在列表 exit=-1 0s slug=t_api_141323
+PASS K3 新建工作区删除后消失 exit=-1 0s slug=t_api_141323
+PASS K4 新建/删除文件夹 API exit=-1 0s name=t_fld_141323
+-----------------------------------
+PASS=12 FAIL=0 SKIP=0 总计=12
+-----------------------------------
+系统库残留统计:
+  custom-documents 中 t_* 残留文件: 16 个（无法经 API 物理删除，见已知限制 2）
+-----------------------------------
+已知限制与建议:
+  1) system/remove-documents 返回 success 但不物理删除（实测）→ 清理一律用 update-embeddings deletes 解除关联
+  2) 系统文档库测试残留无法经 API 清理，如需彻底清理需在 WSL 中人工处理数据目录
+  3) LLM chat 检索（E5）默认跳过：本机 Ollama qwen2.5:14b 推理慢，需 -RunHeavyChat 显式开启
+  4) embed.ps1 已修复 4 处：验证字段 docpath / 非交互无 slug exit=1 / MaxFileSizeMB 用 double / 重复检测改 filename 前缀匹配
+  5) 备份目录：003anythingllmtools_backup_<时间戳>（含 .git 与全部文件）

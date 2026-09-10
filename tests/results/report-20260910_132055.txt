@@ -1,0 +1,60 @@
+﻿AnythingLLM 嵌入工具 全面测试报告 (v1.2)
+时间: 2026-09-10 13:20:55
+项目: D:\WSL\AI-tools\003anythingllmtools | 工作区: wsl
+负载开关: RunHeavyChat=False Warmup=False
+总耗时: 29.8s
+-----------------------------------
+PASS A1 embed.ps1 编码=UTF8-BOM 且含 V0.9 exit=0 0.3s 检查 BOM 与版本标识
+PASS A2 BAT 入口=ANSI 无 BOM+CRLF exit=-1 0s 检查 BOM 与换行
+PASS A3 config.json 可解析 exit=-1 0s 去注释后 ConvertFrom-Json 成功
+PASS A4 关键配置齐全 exit=-1 0s baseUrl/超时/扩展名/大小
+PASS A5 apikey.txt 可读非空 exit=-1 0s key 长度 31
+PASS A6 tools/ 目录结构齐全 exit=-1 0s embed.ps1/bat/config/README/logs
+PASS D1 单 txt 上传成功(Setup) exit=-1 0s 上传=True location=True
+PASS D2 中文文件名上传(Setup) exit=-1 0s location=True
+PASS D3 多文件(3)一次上传(Setup) exit=-1 0s a/b/c location=True
+PASS X1 批量4文件直传+一次嵌入吞吐 exit=-1 0.5s 上传=True 嵌入=True 耗时=0.5s
+PASS B1 --help 输出用法 exit=0 exit=0 0.3s exit=0
+PASS B2 -h 输出用法 exit=0 exit=0 0.3s exit=0
+PASS B3 无参数提示用法(exit!=0) exit=2 0.3s exit=2 timeout=False
+PASS B4 文件不存在报错 exit=1 exit=1 0.4s exit=1
+PASS B5 未知开关不挂死 exit=2 0.3s exit=2 timeout=False
+PASS B6 目录作为输入被拒绝 exit=1 0.3s exit=1
+PASS C1 服务探活+CLI 可用(轻量) exit=0 0.3s alive=System.Object[] help_exit=0
+PASS C2 --diagnose 输出诊断不阻断 exit=0 1.7s exit=0 timeout=False
+PASS C3 服务不可达友好报错 exit=1 exit=1 11.8s exit=1 timeout=False
+PASS C4 config 缺失时默认配置可用 exit=0 0.3s exit=0 timeout=False
+PASS D4 不支持扩展名被拒绝 exit=1 0.3s exit=1 timeout=False
+PASS D5 空文件行为明确不崩溃 exit=1 0.3s exit=1 timeout=False
+PASS D6 重复上传非交互自动跳过不新增 exit=0 0.5s exit=0 timeout=False 重传前=1 重传后=1
+PASS D7 超大文件被拒绝 exit=1 0.4s exit=1 timeout=False
+PASS E2 无效 slug 报错 exit=1 exit=1 0.4s exit=1 timeout=False
+PASS E3 非交互无 slug 明确提示不卡 exit=1 0.4s exit=1 timeout=False
+PASS E4 嵌入后文档在库且 metadata 完整 exit=-1 0s 文档数=1 metadata匹配=True
+SKIP E5 检索命中(LLM chat) exit=-1 0s 默认跳过重负载 LLM 用例，加 -RunHeavyChat 执行
+PASS F1 t_* 测试文档删除成功 exit=-1 0s 删前=6 删后=0
+PASS F2 删除后无 t_ 残留 exit=-1 0s 残留: 
+PASS G1 全流程非交互无卡死 exit=0 exit=0 1s exit=0 timeout=False
+PASS G3 非交互 --help 正常 exit=0 0.3s exit=0 timeout=False
+PASS T1 BAT 无参数提示 exit=2 exit=2 0s exit=2 timeout=False
+PASS T2 BAT 参数透传全流程 exit=0 exit=0 1s exit=0 timeout=False
+PASS H1 运行生成 jsonl 日志 exit=-1 0s 前=2 后=2
+PASS H2 --clean-logs 清理过期日志 exit=0 0.3s 旧日志已删=True exit=0
+PASS H3 连续运行稳定(1嵌入+2轻量) exit=0 0s 退出码序列: 0,0,0
+PASS I1 无 System.Net.Http 加载错误 exit=0 1s 复用 G1 输出检查
+PASS I2 无 HttpClient.Timeout 异常 exit=0 1s 复用 G1 输出检查
+PASS I3 中文输出可读 exit=0 1s 复用 G1 输出检查
+PASS I4 退出码符合规范 0/1/2/3 exit=0 1s exit=0
+PASS W1 清理后正式文档完整(WSL知识库2份) exit=-1 0s 当前: WSLu63a7u5236u9762u677fu5f00u53d1u5751u70b9u77e5u8bc6u5e93.md-7a28c757-8947-40e7-b498-3cde90f17362.json, WSLu8fd0u884cSHu811au672cu4e0eu4e2du6587u7f16u7801u77e5u8bc6u5e93.md-c31b6370-132d-45df-a2ad-b1304d6dc912.json, t_flow.txt-3bcb6a68-626f-4e10-ad8f-9dcf35828105.json, t_bat.txt-90a18553-df9a-442f-8708-f933b378bd82.json
+-----------------------------------
+PASS=41 FAIL=0 SKIP=1 总计=42
+-----------------------------------
+系统库残留统计:
+  custom-documents 中 t_* 残留文件: 26 个（无法经 API 物理删除，见已知限制 2）
+-----------------------------------
+已知限制与建议:
+  1) system/remove-documents 返回 success 但不物理删除（实测）→ 清理一律用 update-embeddings deletes 解除关联
+  2) 系统文档库测试残留无法经 API 清理，如需彻底清理需在 WSL 中人工处理数据目录
+  3) LLM chat 检索（E5）默认跳过：本机 Ollama qwen2.5:14b 推理慢，需 -RunHeavyChat 显式开启
+  4) embed.ps1 已修复 4 处：验证字段 docpath / 非交互无 slug exit=1 / MaxFileSizeMB 用 double / 重复检测改 filename 前缀匹配
+  5) 备份目录：003anythingllmtools_backup_<时间戳>（含 .git 与全部文件）
