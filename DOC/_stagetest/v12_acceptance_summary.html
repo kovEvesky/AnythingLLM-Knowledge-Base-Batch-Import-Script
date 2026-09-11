@@ -1,0 +1,90 @@
+<html style="margin:0;padding:0;">
+<div style="background-color:transparent;box-sizing:border-box;font-family:'Roboto','PingFang SC','Segoe UI',Arial,sans-serif;color:#1A1B1C;padding:8px 0;">
+  <div style="background:#FFFFFF;border:1px solid #E4E3DD;border-radius:14px;padding:16px;box-sizing:border-box;">
+
+    <!-- 标题 -->
+    <div style="font-size:18px;font-weight:600;color:#1A1B1C;">AnythingLLM 批量导入工具 · v1.2 验收总览</div>
+    <div style="font-size:12px;color:#6B7280;margin-top:4px;">2026-09-11 模拟器端到端回归 · 116 条单测全绿 · Release APK 已重签</div>
+
+    <!-- 三需求闭环 -->
+    <svg viewBox="0 0 1000 150" width="100%" xmlns="http://www.w3.org/2000/svg" style="margin-top:12px;display:block;">
+      <!-- 需求1 -->
+      <rect x="10" y="10" width="313" height="130" rx="12" fill="#F4F6FB" stroke="#9BBBF4" stroke-width="1"/>
+      <text x="30" y="38" font-size="14" font-weight="600" fill="#1A1B1C">需求一 离线暂存</text>
+      <text x="30" y="62" font-size="12" fill="#444">户外：分享即暂存收集箱</text>
+      <text x="30" y="82" font-size="12" fill="#444">快照(文件夹+工作区)离线可读</text>
+      <text x="30" y="102" font-size="12" fill="#444">室内：一键同步批量执行</text>
+      <text x="30" y="128" font-size="12" font-weight="600" fill="#2F6B2F">R12-R14 ✅</text>
+
+      <!-- 需求2 -->
+      <rect x="343" y="10" width="313" height="130" rx="12" fill="#F1F8F1" stroke="#A2DDAA" stroke-width="1"/>
+      <text x="363" y="38" font-size="14" font-weight="600" fill="#1A1B1C">需求二 分享+链接</text>
+      <text x="363" y="62" font-size="12" fill="#444">文件/链接分享双入口</text>
+      <text x="363" y="82" font-size="12" fill="#444">接收即复制防 URI 权限过期</text>
+      <text x="363" y="102" font-size="12" fill="#444">链接内容由服务器抓取</text>
+      <text x="363" y="128" font-size="12" font-weight="600" fill="#2F6B2F">R12-R13 ✅</text>
+
+      <!-- 需求3 -->
+      <rect x="676" y="10" width="314" height="130" rx="12" fill="#F9F3F0" stroke="#F4B393" stroke-width="1"/>
+      <text x="696" y="38" font-size="14" font-weight="600" fill="#1A1B1C">需求三 同步+双主页</text>
+      <text x="696" y="62" font-size="12" fill="#444">Tab1 收集箱 / Tab2 知识库</text>
+      <text x="696" y="82" font-size="12" fill="#444">无工作区降级纯上传(同步)</text>
+      <text x="696" y="102" font-size="12" fill="#444">断点续传+原件自动清理</text>
+      <text x="696" y="128" font-size="12" font-weight="600" fill="#2F6B2F">R15-R19 ✅</text>
+    </svg>
+
+    <!-- 回归结果矩阵 -->
+    <div style="font-size:15px;font-weight:600;margin-top:14px;">回归结果矩阵</div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:6px;">
+      <tr style="background:#F4F3EE;">
+        <td style="padding:6px 8px;border:1px solid #E4E3DD;font-weight:600;width:11%;">用例</td>
+        <td style="padding:6px 8px;border:1px solid #E4E3DD;">R12 文件分享</td>
+        <td style="padding:6px 8px;border:1px solid #E4E3DD;">R13 链接分享</td>
+        <td style="padding:6px 8px;border:1px solid #E4E3DD;">R14 离线</td>
+        <td style="padding:6px 8px;border:1px solid #E4E3DD;">R15 快照比对</td>
+        <td style="padding:6px 8px;border:1px solid #E4E3DD;">R16 同步模式</td>
+        <td style="padding:6px 8px;border:1px solid #E4E3DD;">R17 双主页</td>
+        <td style="padding:6px 8px;border:1px solid #E4E3DD;">R18 一键同步</td>
+        <td style="padding:6px 8px;border:1px solid #E4E3DD;">R19 前台服务</td>
+      </tr>
+      <tr>
+        <td style="padding:6px 8px;border:1px solid #E4E3DD;font-weight:600;">结果</td>
+        <td style="padding:6px 8px;border:1px solid #E4E3DD;color:#2F6B2F;font-weight:600;text-align:center;">✅</td>
+        <td style="padding:6px 8px;border:1px solid #E4E3DD;color:#2F6B2F;font-weight:600;text-align:center;">✅</td>
+        <td style="padding:6px 8px;border:1px solid #E4E3DD;color:#2F6B2F;font-weight:600;text-align:center;">✅</td>
+        <td style="padding:6px 8px;border:1px solid #E4E3DD;color:#2F6B2F;font-weight:600;text-align:center;">✅</td>
+        <td style="padding:6px 8px;border:1px solid #E4E3DD;color:#2F6B2F;font-weight:600;text-align:center;">✅*</td>
+        <td style="padding:6px 8px;border:1px solid #E4E3DD;color:#2F6B2F;font-weight:600;text-align:center;">✅</td>
+        <td style="padding:6px 8px;border:1px solid #E4E3DD;color:#2F6B2F;font-weight:600;text-align:center;">✅</td>
+        <td style="padding:6px 8px;border:1px solid #E4E3DD;color:#2F6B2F;font-weight:600;text-align:center;">✅</td>
+      </tr>
+    </table>
+    <div style="font-size:11px;color:#6B7280;margin-top:4px;">* R16 同步模式由 SyncEngineTest 单测覆盖(MockWebServer 验证 document/upload/{folder} 纯上传契约)</div>
+
+    <!-- 关键实测证据 -->
+    <div style="font-size:15px;font-weight:600;margin-top:14px;">关键实测证据</div>
+    <div style="background:#F4F3EE;border:1px solid #E4E3DD;border-radius:10px;padding:10px 12px;font-size:12px;margin-top:6px;color:#333;line-height:1.7;">
+      <div>· 分享链接 <b>https://example.com/docs/a?x=1</b> → 服务器 wsl 工作区出现 <b>url-example.com_docs_a-{uuid}.json</b>(chunkSource 含完整 query)</div>
+      <div>· 文件分享 <b>v12_test.txt</b>(59B) → 私有目录复制完成,条目 FILE/PENDING</div>
+      <div>· 断网重启快照仍读(18:51 缓存),断网点同步 → “连接服务器失败:Failed to connect to /10.0.2.2:3001”</div>
+      <div>· 标记 custom-documents/wsl → 一键同步 → 条目回写 <b>EXECUTED</b> + serverLocation,原件自动清理</div>
+    </div>
+
+    <!-- 回归修复 -->
+    <div style="font-size:15px;font-weight:600;margin-top:14px;">回归发现并修复</div>
+    <div style="background:#F9F3F0;border:1px solid #E4E3DD;border-radius:10px;padding:10px 12px;font-size:12px;margin-top:6px;color:#333;line-height:1.7;">
+      <div><b>BUG-回归-01</b> 知识库 Tab 未应用 Scaffold contentPadding → 同步按钮被 TopAppBar 遮挡 → HomeScreen 传 padding 修复</div>
+      <div><b>BUG-回归-02</b> 分享后返回主页不刷新(ViewModel init 仅一次) → LaunchedEffect 组合期刷新修复</div>
+    </div>
+
+    <!-- 交付物 -->
+    <div style="font-size:15px;font-weight:600;margin-top:14px;">交付物</div>
+    <div style="background:#F1F8F1;border:1px solid #E4E3DD;border-radius:10px;padding:10px 12px;font-size:12px;margin-top:6px;color:#333;line-height:1.7;">
+      <div>· <b>app-release-v1.2.apk</b>(12,066,539 B,Release 正式签名)· app-debug.apk</div>
+      <div>· 08-v1.2开发计划.md(§12 验收记录)· CHANGELOG.md(阶段 4 回归验证段)</div>
+      <div>· 单测 116 全绿(failures=0);回归脚本 DOC/_stagetest/v12_*.sh 入库</div>
+    </div>
+
+  </div>
+</div>
+</html>

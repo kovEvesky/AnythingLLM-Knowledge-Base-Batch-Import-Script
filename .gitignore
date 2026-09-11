@@ -1,0 +1,21 @@
+.gradle/
+.kotlin/
+build/
+local.properties
+.idea/
+*.iml
+.DS_Store
+/captures
+.externalNativeBuild
+.cxx
+
+# 密钥口令(不入库);签名 jks 本体保留
+keystore.properties
+
+# 构建产物
+*.apk
+*.aab
+
+# 本机测试用 API key(仅本机)
+apikey.txt
+

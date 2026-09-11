@@ -1,0 +1,6 @@
+# 换行符策略:文本统一 LF 入库;shell 脚本强制 LF(供 WSL 执行),.bat 强制 CRLF
+* text=auto
+gradlew text eol=lf
+*.sh text eol=lf
+gradlew.bat text eol=crlf
+*.bat text eol=crlf
