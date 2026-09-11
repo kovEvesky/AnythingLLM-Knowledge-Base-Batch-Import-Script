@@ -152,3 +152,20 @@
 | BUG-多选-01 | **文件夹多选分享→app 无反应/不启动** | `getParcelableArrayListExtra<Uri>(EXTRA_STREAM)` 在 EXTRA_STREAM 为**单 Uri**(部分文件管理器多选只发单 Uri+clipData)时抛 ClassCastException → ShareReceiver.onCreate 崩溃 → 无任何反馈 | `extractUris()`:用 `extras.get(EXTRA_STREAM)` 取原始对象做 `is Uri / is List<*> / is Array<*>` 类型分发 + clipData 逐 item 收集(LinkedHashSet 去重);handleSend/handleSendMultiple 统一走该函数;接收成功 `openCollector()` 自动打开收集箱(NEW_TASK\|CLEAR_TOP\|SINGLE_TOP) | ①Bundle 的 getParcelableArrayListExtra 对"单值"不返回 null 而是抛异常,必须先 `extras.get()` 判型再分发 ②分享器形态各异(SEND_MULTIPLE 也可能发单 Uri),兼容必须覆盖 Uri/List/Array/clipData 四种 ③adb 直发 content:// URI 无 grant 必 SecurityException,真实授权只能走 chooser/文件管理器链路(用户真机验证通过) |
 
 > 经验延续:API 问题一律回查 docker 日志(容器内 AnythingLLM stdout 有 CollectorApi/OllamaEmbedder 全链路日志)。
+
+## 8. v1.2 真机(Pixel 3 / Android 15)全面测试(2026-09-11)
+
+> 环境:项目迁至 `004AnythingLLM-Android`(git 已配 GitHub 远程 origin/Android),USB 真机 adb 直连;服务器地址改为局域网 `http://192.168.8.71:3001`(默认 10.0.2.2 仅模拟器可用);Debug 包 run-as 验证私有数据。
+
+| 测试项 | 结果 | 实测证据 |
+|---|---|---|
+| 手机→PC 网络 | ✅ | ping 192.168.8.71 0% 丢包;HTTP /api/ping 200 |
+| 服务器鉴权 | ✅ | `{"authenticated":true}`(apikey.txt) |
+| 配置持久化 | ✅ | DataStore `config.preferences_pb` 含 `http://192.168.8.71:3001` |
+| 链接分享×2 | ✅ | 文本分享 → 收集箱 LINK 条目×2(PENDING)→ 标记(custom-documents+wsl)→ 同步 → 服务器落盘 `url-*.json`(docSource="URL link uploaded by the user.") |
+| 单选文件分享 | ✅ | 系统 chooser 选"AnythingLLM 批量导入" → FILE 条目 `v12_phone_a.txt`(43B,PENDING,已复制私有目录) |
+| 多选分享(单 Uri 形态) | ✅ 无崩溃 | am SEND_MULTIPLE 单 Uri → extractUris 不抛 ClassCastException(修复生效);未入库系 Resolver 不授权单 Uri SEND_MULTIPLE(测试链路限制,非缺陷) |
+| v1.0 即时导入 | ✅ | SAF 选文件 → 校验"通过 1·拒绝 0" → 目标 custom-documents+ws1 → "共 1·成功 1" → 服务器落盘 `v12_phone_a.txt-*.json` |
+| 权限模型 | ✅ | 唯一运行时权限 POST_NOTIFICATIONS granted=true;存储权限按设计不需要(分享/SAF 走系统授权) |
+
+**新踩坑(清理链路)**:`DELETE /api/v1/system/remove-documents` 对**仍关联工作区**的文档返回 `success:true` 但**不物理删除**(官方"假成功",01 文档 §5.7 已记载)。正确清理顺序:① `POST /api/v1/workspace/{slug}/update-embeddings` 的 **deletes 必须传 docpath**(`custom-documents/xxx.json`,非裸文件名——传文件名不生效)解关联;② remove-documents;③ 仍残留时 `docker exec anythingllm rm` 物理删除(解关联后安全)。复检容器 `custom-documents/` 下 LEFT=0。
