@@ -8,6 +8,22 @@ import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import java.util.concurrent.TimeUnit
 
 /**
+ * 归一化服务器地址:无 scheme 自动补 http://,并保证以 / 结尾。
+ * 用户习惯只填 "IP:端口" 或 "域名:端口",Retrofit baseUrl 强制要求 scheme,缺失会抛
+ * IllegalArgumentException(BUG-连接测试-01 根因),故在工厂入口统一兜底。
+ */
+fun normalizeBaseUrl(raw: String): String {
+    val trimmed = raw.trim()
+    if (trimmed.isBlank()) return trimmed
+    val withScheme = if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+        trimmed
+    } else {
+        "http://$trimmed"
+    }
+    return if (withScheme.endsWith("/")) withScheme else "$withScheme/"
+}
+
+/**
  * AnythingLLM API 客户端工厂。
  * - 每次调用基于最新配置(地址/Key/超时)创建独立实例,便于设置改动后即时生效;
  * - 认证:Bearer 拦截器;
@@ -32,7 +48,7 @@ class AnythingLlmClientFactory {
         readTimeoutSec: Long = 60,
         writeTimeoutSec: Long = 60,
     ): AnythingLLMApi {
-        val normalized = if (baseUrl.endsWith("/")) baseUrl else "$baseUrl/"
+        val normalized = normalizeBaseUrl(baseUrl)
         val client = OkHttpClient.Builder()
             .connectTimeout(connectTimeoutSec, TimeUnit.SECONDS)
             .readTimeout(readTimeoutSec, TimeUnit.SECONDS)

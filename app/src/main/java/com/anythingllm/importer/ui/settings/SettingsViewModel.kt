@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.anythingllm.importer.AnythingLLMApp
+import com.anythingllm.importer.data.api.normalizeBaseUrl
 import com.anythingllm.importer.data.config.AppConfig
 import com.anythingllm.importer.data.config.ThemeMode
 import com.anythingllm.importer.data.config.ConfigRepository
@@ -135,12 +136,24 @@ class SettingsViewModel(
         if (s.testing) return
         viewModelScope.launch {
             _uiState.update { it.copy(testing = true, testResult = null) }
-            val result = probe.probe(
-                baseUrl = s.baseUrl.trim(),
-                apiKey = s.apiKey.trim(),
-                probeTimeoutSec = AppConfig.parsePositiveInt(s.probeTimeout, 5, max = 60).toLong(),
-            )
-            _uiState.update { it.copy(testing = false, testResult = result) }
+            runCatching {
+                probe.probe(
+                    baseUrl = s.baseUrl.trim(),
+                    apiKey = s.apiKey.trim(),
+                    probeTimeoutSec = AppConfig.parsePositiveInt(s.probeTimeout, 5, max = 60).toLong(),
+                )
+            }.onSuccess { result ->
+                _uiState.update { it.copy(testing = false, testResult = result) }
+            }.onFailure { e ->
+                // 兜底:任何未预期异常都不得闪退(BUG-连接测试-01),降级为不可达提示
+                _uiState.update {
+                    it.copy(
+                        testing = false,
+                        testResult = ProbeResult.Unreachable,
+                        error = "测试连接异常: ${e.message}",
+                    )
+                }
+            }
         }
     }
 
@@ -165,7 +178,7 @@ class SettingsViewModel(
     }
 
     private fun UiState.toConfig(): AppConfig = AppConfig(
-        baseUrl = baseUrl.trim(),
+        baseUrl = normalizeBaseUrl(baseUrl),
         apiKey = apiKey.trim(),
         allowedExtensions = AppConfig.parseExtensions(allowedExtensions),
         maxFileSizeMB = AppConfig.parsePositiveInt(maxFileSizeMB, 100, max = 2048),

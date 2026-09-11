@@ -29,8 +29,10 @@ class ConnectionProbe(
     private val factory: AnythingLlmClientFactory,
 ) {
     suspend fun probe(baseUrl: String, apiKey: String, probeTimeoutSec: Long = 5): ProbeResult {
-        val api = factory.create(baseUrl, apiKey, readTimeoutSec = probeTimeoutSec)
         return try {
+            // 工厂创建也纳入保护:地址非法(无 scheme 等)时 Retrofit baseUrl 会抛异常,
+            // 统一映射为 Unreachable 而非让协程崩溃(BUG-连接测试-01)
+            val api = factory.create(baseUrl, apiKey, readTimeoutSec = probeTimeoutSec)
             // 1. 探活(无需 Key)
             val ping = api.ping()
             if (!ping.online) return ProbeResult.Unreachable
