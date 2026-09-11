@@ -17,6 +17,8 @@
 - [使用方法](#使用方法)
 - [测试](#测试)
 - [版本历史](#版本历史)
+- [开源协议](#开源协议)
+- [致谢](#致谢)
 
 ---
 
@@ -55,6 +57,7 @@
 003anythingllmtools/
 ├── README.md                        # 项目说明（本文件）
 ├── CHANGELOG.md                     # 完整迭代记录（v0.8 → v1.0.1 + 测试）
+├── LICENSE                          # MIT 开源协议
 ├── .gitignore                       # 忽略 apikey.txt / logs / backup
 │
 ├── tools/                           # ★ 核心工具目录
@@ -308,3 +311,43 @@ powershell -ExecutionPolicy Bypass -File tests\run-comprehensive-tests.ps1 -Case
 | v0.9.5 | 菜单标题带文件上下文 |
 | v1.0 | 界面全面美化（Banner/徽章/进度条/主题菜单）、正式版 |
 | v1.0.1 | 修复菜单 Theme 参数重复 |
+
+---
+
+## 开源协议
+
+本项目基于 [MIT License](LICENSE) 开源发布。
+
+```
+MIT License
+
+Copyright (c) 2026 kovEvesky
+
+特此免费授予任何获得本软件副本及相关文档文件（"软件"）的人不受限制地处理本软件的权利，
+包括但不限于使用、复制、修改、合并、发布、分发、再许可和/或销售软件副本的权利，
+并允许向其提供软件的人这样做，前提是遵守以下条件：
+
+上述版权声明和本许可声明应包含在本软件的所有副本或主要部分中。
+
+本软件按"原样"提供，不附带任何明示或暗示的保证，包括但不限于适销性、
+特定用途适用性和不侵权的保证。在任何情况下，作者或版权持有人均不对
+因本软件或使用本软件或其他交易而产生或与之相关的任何索赔、损害或其他责任负责，
+无论是合同、侵权或其他行为。
+```
+
+> 完整法律文本见 [LICENSE](LICENSE)。
+
+---
+
+## 致谢
+
+本项目深度依赖以下开源项目与社区工具，在此表示衷心感谢：
+
+| 项目 | 说明 |
+|---|---|
+| [AnythingLLM](https://github.com/Mintplex-Labs/anything-llm) | 核心依赖的开源 AI 知识库平台，本项目通过其官方 REST API 完成文档上传、工作区管理与向量嵌入，全程未修改其任何安装文件 |
+| [Ollama](https://ollama.com) | 推荐的本地 LLM / 嵌入模型运行时，与 AnythingLLM 配合实现完全本地化的知识检索 |
+| [Docker](https://www.docker.com) / [WSL](https://learn.microsoft.com/windows/wsl/) | AnythingLLM 的部署载体，提供隔离、可复现的运行环境 |
+| PowerShell / .NET | 主程序与测试套件的实现基础 |
+
+若本工具对你的工作有所帮助，欢迎给 [AnythingLLM](https://github.com/Mintplex-Labs/anything-llm) 和本仓库点个 Star ⭐。
