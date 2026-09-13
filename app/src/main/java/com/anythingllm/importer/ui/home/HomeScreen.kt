@@ -1,4 +1,5 @@
 package com.anythingllm.importer.ui.home
+import com.anythingllm.importer.R
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -33,6 +34,7 @@ import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Inbox
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -78,19 +80,19 @@ fun HomeScreen(
                     selected = tab == 0,
                     onClick = { tab = 0 },
                     icon = { Icon(Icons.Filled.Inbox, contentDescription = null) },
-                    label = { Text("收集箱") },
+                    label = { Text(stringResource(R.string.home_tab_inbox)) },
                 )
                 NavigationBarItem(
                     selected = tab == 1,
                     onClick = { tab = 1 },
                     icon = { Icon(Icons.AutoMirrored.Filled.LibraryBooks, contentDescription = null) },
-                    label = { Text("知识库") },
+                    label = { Text(stringResource(R.string.home_tab_knowledge)) },
                 )
                 NavigationBarItem(
                     selected = tab == 2,
                     onClick = { tab = 2 },
                     icon = { Icon(Icons.Filled.Folder, contentDescription = null) },
-                    label = { Text("资料库") },
+                    label = { Text(stringResource(R.string.library_title)) },
                 )
             }
         },
@@ -106,7 +108,7 @@ fun HomeScreen(
                     TextButton(onClick = onOpenImport) {
                         Icon(Icons.Filled.CreateNewFolder, contentDescription = null, modifier = Modifier.width(18.dp))
                         Spacer(Modifier.width(4.dp))
-                        Text("立即导入(v1.0 即时流程)")
+                        Text(stringResource(R.string.home_quick_import))
                     }
                 }
                 CollectScreen(

@@ -1,4 +1,5 @@
 package com.anythingllm.importer.ui.home
+import com.anythingllm.importer.R
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -11,11 +12,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.Sync
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -24,18 +32,34 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import com.anythingllm.importer.data.collect.CollectEntry
 import com.anythingllm.importer.data.collect.EntryType
 import com.anythingllm.importer.domain.mark.MarkPlan
 import com.anythingllm.importer.domain.mark.MarkValidation
 import com.anythingllm.importer.domain.sync.SyncItemStatus
 
-private fun statusIcon(status: SyncItemStatus): String = when (status) {
-    SyncItemStatus.PENDING -> "○"
-    SyncItemStatus.RUNNING -> "…"
-    SyncItemStatus.SUCCESS -> "✓"
-    SyncItemStatus.FAILED -> "✗"
-    SyncItemStatus.SKIPPED -> "→"
+/** UI-11:状态符号图标化(带语义 contentDescription,替代纯文本 ○…✓✗→) */
+@Composable
+private fun StatusIcon(status: SyncItemStatus) {
+    val (icon, tint, label) = when (status) {
+        SyncItemStatus.PENDING -> Triple(
+            Icons.Outlined.Schedule, MaterialTheme.colorScheme.onSurfaceVariant, "待同步",
+        )
+        SyncItemStatus.RUNNING -> Triple(
+            Icons.Outlined.Sync, MaterialTheme.colorScheme.primary, "同步中",
+        )
+        SyncItemStatus.SUCCESS -> Triple(
+            Icons.Filled.CheckCircle, MaterialTheme.colorScheme.primary, "成功",
+        )
+        SyncItemStatus.FAILED -> Triple(
+            Icons.Filled.ErrorOutline, MaterialTheme.colorScheme.error, "失败",
+        )
+        SyncItemStatus.SKIPPED -> Triple(
+            Icons.AutoMirrored.Filled.ArrowForward, MaterialTheme.colorScheme.onSurfaceVariant, "跳过",
+        )
+    }
+    Icon(icon, contentDescription = label, tint = tint, modifier = Modifier.width(16.dp).height(16.dp))
 }
 
 /**
@@ -73,7 +97,7 @@ fun KnowledgeScreen(
         // v1.3 无服务器引导:未安装/未连接 AnythingLLM 时提示走资料库 + FTP 通道
         if (!state.snapshot.hasData) {
             Text(
-                "未连接服务器(未安装 AnythingLLM 也可用):请到「资料库」Tab 归档文件,并通过 FTP 同步到 PC。",
+                stringResource(R.string.knowledge_offline_hint),
                 color = MaterialTheme.colorScheme.tertiary,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(top = 4.dp),
@@ -88,28 +112,36 @@ fun KnowledgeScreen(
             ) {
                 Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        "同步进度 ${state.sync.doneCount}/${state.sync.totalCount}" +
+                        stringResource(R.string.knowledge_sync_progress, state.sync.doneCount, state.sync.totalCount) +
                             (if (state.sync.isTerminal) " · 完成" else ""),
                         style = MaterialTheme.typography.titleSmall,
                     )
                     Text(
-                        "成功 ${state.sync.successCount} · 跳过 ${state.sync.skippedCount} · 失败 ${state.sync.failedCount}",
+                        stringResource(
+                            R.string.knowledge_sync_summary,
+                            state.sync.successCount,
+                            state.sync.skippedCount,
+                            state.sync.failedCount,
+                        ),
                         style = MaterialTheme.typography.bodySmall,
                     )
                     state.sync.items.forEach { item ->
-                        Text(
-                            "${statusIcon(item.status)} ${item.entry.displayTitle}" +
-                                (item.message?.let { " — $it" } ?: ""),
-                            style = MaterialTheme.typography.bodySmall,
-                            maxLines = 2,
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            StatusIcon(item.status)
+                            Spacer(Modifier.width(4.dp))
+                            Text(
+                                item.entry.displayTitle + (item.message?.let { " — $it" } ?: ""),
+                                style = MaterialTheme.typography.bodySmall,
+                                maxLines = 2,
+                            )
+                        }
                     }
                 }
             }
         }
         if (state.syncDone) {
             Text(
-                "同步完成,已执行条目的文件原件已自动清理(FR-26)",
+                stringResource(R.string.knowledge_sync_cleaned),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.primary,
             )
@@ -137,20 +169,24 @@ fun KnowledgeScreen(
         Spacer(Modifier.height(16.dp))
         Text("知识库结构(快照)", style = MaterialTheme.typography.titleMedium)
         Text(
-            if (state.snapshot.hasData) "快照时间: ${state.snapshot.snapshotTime.take(16).replace('T', ' ')}" else "暂无快照,连接服务器后缓存(断网可用)",
+            if (state.snapshot.hasData) {
+                stringResource(R.string.knowledge_snapshot_time, state.snapshot.snapshotTime.take(16).replace('T', ' '))
+            } else {
+                stringResource(R.string.knowledge_snapshot_empty)
+            },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Card(Modifier.fillMaxWidth().padding(top = 8.dp)) {
             Column(Modifier.padding(12.dp)) {
-                Text("文档文件夹(${state.snapshot.folders.size})", style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(R.string.knowledge_folders, state.snapshot.folders.size), style = MaterialTheme.typography.labelLarge)
                 state.snapshot.folders.forEach { f ->
                     Text("• ${f.name}", style = MaterialTheme.typography.bodyMedium)
                 }
                 Spacer(Modifier.height(8.dp))
                 HorizontalDivider()
                 Spacer(Modifier.height(8.dp))
-                Text("工作区(${state.snapshot.workspaces.size})", style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(R.string.knowledge_workspaces, state.snapshot.workspaces.size), style = MaterialTheme.typography.labelLarge)
                 state.snapshot.workspaces.forEach { w ->
                     Text("• ${w.name}", style = MaterialTheme.typography.bodyMedium)
                 }
@@ -159,10 +195,10 @@ fun KnowledgeScreen(
 
         // ===== 分区 B:已标记计划(FR-22/23) =====
         Spacer(Modifier.height(16.dp))
-        Text("已标记待执行(${state.markedEntries.size})", style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.knowledge_marked, state.markedEntries.size), style = MaterialTheme.typography.titleMedium)
         if (state.markedEntries.isEmpty()) {
             Text(
-                "暂无已标记条目:在收集箱勾选后标记目标,即移入本区。",
+                stringResource(R.string.knowledge_marked_empty),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -179,8 +215,8 @@ fun KnowledgeScreen(
 
         Spacer(Modifier.height(16.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedButton(onClick = onOpenSettings, modifier = Modifier.weight(1f)) { Text("服务器设置") }
-            OutlinedButton(onClick = onOpenLogs, modifier = Modifier.weight(1f)) { Text("查看日志") }
+            OutlinedButton(onClick = onOpenSettings, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.knowledge_open_settings)) }
+            OutlinedButton(onClick = onOpenLogs, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.knowledge_open_logs)) }
         }
     }
 }
@@ -227,8 +263,8 @@ private fun MarkedEntryCard(
                 )
             }
             Row {
-                TextButton(onClick = onUnmark) { Text("取消标记") }
-                TextButton(onClick = onDelete) { Text("删除") }
+                TextButton(onClick = onUnmark) { Text(stringResource(R.string.knowledge_unmark)) }
+                TextButton(onClick = onDelete) { Text(stringResource(R.string.common_delete)) }
             }
         }
     }

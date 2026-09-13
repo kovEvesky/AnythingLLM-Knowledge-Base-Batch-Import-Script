@@ -1,4 +1,5 @@
 package com.anythingllm.importer.ui.home
+import com.anythingllm.importer.R
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
@@ -16,13 +17,18 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.CreateNewFolder
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.Sync
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -44,6 +50,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import com.anythingllm.importer.data.library.LibraryEntry
 import com.anythingllm.importer.data.library.LibraryEntryType
 import com.anythingllm.importer.data.library.LibraryFolder
@@ -116,12 +123,12 @@ fun LibraryScreen(
             OutlinedButton(onClick = { showNewFolder = true }, modifier = Modifier.weight(1f)) {
                 Icon(Icons.Filled.CreateNewFolder, contentDescription = null, modifier = Modifier.width(18.dp))
                 Spacer(Modifier.width(4.dp))
-                Text("新建文件夹")
+                Text(stringResource(R.string.library_new_folder))
             }
         }
         if (!state.ftp.isConfigured) {
             Text(
-                "未配置 FTP 服务器:请点右上角 ⚙ 填写 PC 地址(PC 运行 tools/ftp-server 脚本),手机与 PC 需同一局域网。",
+                stringResource(R.string.library_ftp_not_configured),
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(top = 4.dp),
@@ -135,31 +142,34 @@ fun LibraryScreen(
             ) {
                 Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
-                        "FTP 同步 ${state.ftpSync.doneCount}/${state.ftpSync.totalCount}" +
+                        stringResource(R.string.library_ftp_progress, state.ftpSync.doneCount, state.ftpSync.totalCount) +
                             (if (state.ftpSync.isTerminal) " · 完成" else ""),
                         style = MaterialTheme.typography.titleSmall,
                     )
                     Text(
-                        "成功 ${state.ftpSync.successCount} · 失败 ${state.ftpSync.failedCount}",
+                        stringResource(R.string.library_ftp_summary, state.ftpSync.successCount, state.ftpSync.failedCount),
                         style = MaterialTheme.typography.bodySmall,
                     )
                     state.ftpSync.items.take(8).forEach { item ->
-                        Text(
-                            "${ftpStatusIcon(item.status)} ${item.entry.title}" +
-                                (item.message?.let { " — $it" } ?: ""),
-                            style = MaterialTheme.typography.bodySmall,
-                            maxLines = 2,
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            FtpStatusIcon(item.status)
+                            Spacer(Modifier.width(4.dp))
+                            Text(
+                                item.entry.title + (item.message?.let { " — $it" } ?: ""),
+                                style = MaterialTheme.typography.bodySmall,
+                                maxLines = 2,
+                            )
+                        }
                     }
                     if (state.ftpSync.totalCount > 8) {
-                        Text("…其余 ${state.ftpSync.totalCount - 8} 条", style = MaterialTheme.typography.bodySmall)
+                        Text(stringResource(R.string.library_ftp_rest, state.ftpSync.totalCount - 8), style = MaterialTheme.typography.bodySmall)
                     }
                 }
             }
         }
         if (state.ftpSyncDone && state.ftpSync.items.isEmpty() && !state.ftpSync.running) {
             Text(
-                "没有待同步条目(资料库为空或已全部同步)",
+                stringResource(R.string.library_ftp_no_pending),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(top = 4.dp),
@@ -170,7 +180,7 @@ fun LibraryScreen(
         if (state.librarySubFolders.isEmpty() && state.libraryEntries.isEmpty()) {
             Spacer(Modifier.height(32.dp))
             Text(
-                "资料库为空。\n用法:① 在「收集箱」勾选条目 → 「归入资料库」归档到文件夹;② 或在此新建文件夹组织目录;③ 点「同步到 PC」上传到 PC。",
+                stringResource(R.string.library_empty),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -226,15 +236,15 @@ fun LibraryScreen(
     deleteFolderTarget?.let { folder ->
         AlertDialog(
             onDismissRequest = { deleteFolderTarget = null },
-            title = { Text("删除文件夹") },
-            text = { Text("「${folder.name}」将被删除,其子文件夹与条目会上移到上级目录,文件本身不会删除。确认?") },
+            title = { Text(stringResource(R.string.library_delete_folder_title)) },
+            text = { Text(stringResource(R.string.library_delete_folder_msg, folder.name)) },
             confirmButton = {
                 TextButton(onClick = {
                     onDeleteFolder(folder.id)
                     deleteFolderTarget = null
                 }) { Text("删除", color = MaterialTheme.colorScheme.error) }
             },
-            dismissButton = { TextButton(onClick = { deleteFolderTarget = null }) { Text("取消") } },
+            dismissButton = { TextButton(onClick = { deleteFolderTarget = null }) { Text(stringResource(R.string.import_cancel)) } },
         )
     }
     moveTarget?.let { entry ->
@@ -250,25 +260,40 @@ fun LibraryScreen(
     deleteEntryTarget?.let { entry ->
         AlertDialog(
             onDismissRequest = { deleteEntryTarget = null },
-            title = { Text("删除条目") },
-            text = { Text("「${entry.title}」将从资料库删除,文件副本一并删除。确认?") },
+            title = { Text(stringResource(R.string.library_delete_entry_title)) },
+            text = { Text(stringResource(R.string.library_delete_entry_msg, entry.title)) },
             confirmButton = {
                 TextButton(onClick = {
                     onDeleteEntry(entry.id)
                     deleteEntryTarget = null
                 }) { Text("删除", color = MaterialTheme.colorScheme.error) }
             },
-            dismissButton = { TextButton(onClick = { deleteEntryTarget = null }) { Text("取消") } },
+            dismissButton = { TextButton(onClick = { deleteEntryTarget = null }) { Text(stringResource(R.string.import_cancel)) } },
         )
     }
 }
 
-private fun ftpStatusIcon(status: FtpItemStatus): String = when (status) {
-    FtpItemStatus.PENDING -> "○"
-    FtpItemStatus.RUNNING -> "…"
-    FtpItemStatus.SUCCESS -> "✓"
-    FtpItemStatus.FAILED -> "✗"
-    FtpItemStatus.SKIPPED -> "→"
+/** UI-11: FTP 状态符号图标化(带语义 contentDescription) */
+@Composable
+private fun FtpStatusIcon(status: FtpItemStatus) {
+    val (icon, tint, label) = when (status) {
+        FtpItemStatus.PENDING -> Triple(
+            Icons.Outlined.Schedule, MaterialTheme.colorScheme.onSurfaceVariant, "待同步",
+        )
+        FtpItemStatus.RUNNING -> Triple(
+            Icons.Outlined.Sync, MaterialTheme.colorScheme.primary, "同步中",
+        )
+        FtpItemStatus.SUCCESS -> Triple(
+            Icons.Filled.CheckCircle, MaterialTheme.colorScheme.primary, "成功",
+        )
+        FtpItemStatus.FAILED -> Triple(
+            Icons.Filled.ErrorOutline, MaterialTheme.colorScheme.error, "失败",
+        )
+        FtpItemStatus.SKIPPED -> Triple(
+            Icons.AutoMirrored.Filled.ArrowForward, MaterialTheme.colorScheme.onSurfaceVariant, "跳过",
+        )
+    }
+    Icon(icon, contentDescription = label, tint = tint, modifier = Modifier.width(16.dp).height(16.dp))
 }
 
 @Composable
@@ -299,9 +324,9 @@ private fun FolderCard(
                 Icon(Icons.Filled.MoreVert, contentDescription = "文件夹操作")
             }
             DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-                DropdownMenuItem(text = { Text("进入") }, onClick = { menu = false; onOpen() })
-                DropdownMenuItem(text = { Text("重命名") }, onClick = { menu = false; onRename() })
-                DropdownMenuItem(text = { Text("删除") }, onClick = { menu = false; onDelete() })
+                DropdownMenuItem(text = { Text(stringResource(R.string.library_menu_open)) }, onClick = { menu = false; onOpen() })
+                DropdownMenuItem(text = { Text(stringResource(R.string.library_menu_rename)) }, onClick = { menu = false; onRename() })
+                DropdownMenuItem(text = { Text(stringResource(R.string.common_delete)) }, onClick = { menu = false; onDelete() })
             }
         }
     }
@@ -338,8 +363,8 @@ private fun EntryCard(
                 Icon(Icons.Filled.MoreVert, contentDescription = "条目操作")
             }
             DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-                DropdownMenuItem(text = { Text("移动到…") }, onClick = { menu = false; onMove() })
-                DropdownMenuItem(text = { Text("删除") }, onClick = { menu = false; onDelete() })
+                DropdownMenuItem(text = { Text(stringResource(R.string.library_move_title)) }, onClick = { menu = false; onMove() })
+                DropdownMenuItem(text = { Text(stringResource(R.string.common_delete)) }, onClick = { menu = false; onDelete() })
             }
         }
     }
@@ -366,16 +391,16 @@ private fun NameDialog(
                 value = name,
                 onValueChange = { name = it },
                 singleLine = true,
-                label = { Text("名称") },
+                label = { Text(stringResource(R.string.library_name_label)) },
             )
         },
         confirmButton = {
             TextButton(
                 enabled = name.isNotBlank(),
                 onClick = { onConfirm(name.trim()) },
-            ) { Text("确定") }
+            ) { Text(stringResource(R.string.common_confirm)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.import_cancel)) } },
     )
 }
 
@@ -388,7 +413,7 @@ private fun MoveDialog(
     var target by remember { mutableStateOf<String?>(null) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("移动到…") },
+        title = { Text(stringResource(R.string.library_move_title)) },
         text = {
             Column {
                 Row(
@@ -424,9 +449,9 @@ private fun MoveDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(target) }) { Text("移动") }
+            TextButton(onClick = { onConfirm(target) }) { Text(stringResource(R.string.library_move_confirm)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.import_cancel)) } },
     )
 }
 

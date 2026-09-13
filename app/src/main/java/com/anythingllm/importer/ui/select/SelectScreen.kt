@@ -1,4 +1,5 @@
 package com.anythingllm.importer.ui.select
+import com.anythingllm.importer.R
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -34,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.anythingllm.importer.domain.validate.PickedFile
@@ -60,7 +62,7 @@ fun SelectScreen(
     Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("选择文件") },
+                    title = { Text(stringResource(R.string.select_title)) },
                     navigationIcon = {
                         IconButton(onClick = onBack) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
@@ -79,9 +81,9 @@ fun SelectScreen(
                 if (state.files.isEmpty()) {
                     Spacer(Modifier.height(32.dp))
                     Text(
-                        "从本机存储选择一个或多个文档\n\n" +
-                            "支持: ${state.allowedExtensions.joinToString(" ")}\n" +
-                            "单文件上限: ${state.maxFileSizeMB}MB",
+                        stringResource(R.string.select_hint) +
+                            stringResource(R.string.select_supported, state.allowedExtensions.joinToString(" ")) + "\n" +
+                            stringResource(R.string.select_max_size, state.maxFileSizeMB),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -91,7 +93,11 @@ fun SelectScreen(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
-                            "已选 ${state.files.size} 个文件 · 共 ${formatBytes(state.files.sumOf { it.sizeBytes.coerceAtLeast(0) })}",
+                            stringResource(
+                                R.string.select_selected,
+                                state.files.size,
+                                formatBytes(state.files.sumOf { it.sizeBytes.coerceAtLeast(0) }),
+                            ),
                             style = MaterialTheme.typography.titleMedium,
                             modifier = Modifier.weight(1f),
                         )
@@ -126,7 +132,7 @@ fun SelectScreen(
                             },
                             modifier = Modifier.weight(1f),
                         ) {
-                            Text("开始校验")
+                            Text(stringResource(R.string.select_validate))
                         }
                     }
                 }

@@ -1,4 +1,5 @@
 package com.anythingllm.importer.ui.import
+import com.anythingllm.importer.R
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
@@ -39,6 +40,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.anythingllm.importer.domain.import.ImportMode
 import com.anythingllm.importer.domain.validate.PassedFile
@@ -55,7 +57,7 @@ fun TargetScreen(
     Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("导入目标") },
+                    title = { Text(stringResource(R.string.target_title)) },
                     navigationIcon = {
                         IconButton(onClick = onBack) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
@@ -78,7 +80,7 @@ fun TargetScreen(
                     return@Column
                 }
                 if (state.loadError != null) {
-                    Text("加载失败: ${state.loadError}", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.target_load_error, state.loadError.toString()), color = MaterialTheme.colorScheme.error)
                     return@Column
                 }
                 if (passedFiles.isEmpty()) {
@@ -89,17 +91,17 @@ fun TargetScreen(
                     FilterChip(
                         selected = state.mode == ImportMode.UNIFIED,
                         onClick = { viewModel.setMode(ImportMode.UNIFIED) },
-                        label = { Text("统一模式") },
+                        label = { Text(stringResource(R.string.target_mode_unified)) },
                     )
                     FilterChip(
                         selected = state.mode == ImportMode.PER_ITEM,
                         onClick = { viewModel.setMode(ImportMode.PER_ITEM) },
-                        label = { Text("逐项模式") },
+                        label = { Text(stringResource(R.string.target_mode_itemized)) },
                     )
                 }
                 Text(
                     if (state.mode == ImportMode.UNIFIED) {
-                        "全部 ${passedFiles.size} 个文件 → 同一文件夹 + 同一工作区"
+                        stringResource(R.string.target_mode_unified_desc, passedFiles.size)
                     } else {
                         "每个文件单独选择文件夹与工作区"
                     },
@@ -150,7 +152,7 @@ fun TargetScreen(
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !state.running && !state.starting && state.unifiedWorkspace.isNotBlank(),
                 ) {
-                    Text("开始导入 ${passedFiles.size} 个文件")
+                    Text(stringResource(R.string.target_start_import, passedFiles.size))
                 }
             }
         }
@@ -236,13 +238,13 @@ private fun CreateFolderDialog(viewModel: ImportSessionViewModel) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     AlertDialog(
         onDismissRequest = viewModel::dismissCreateFolder,
-        title = { Text("新建文档文件夹") },
+        title = { Text(stringResource(R.string.target_new_folder_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = state.createFolderName,
                     onValueChange = viewModel::onCreateFolderNameChange,
-                    label = { Text("文件夹名") },
+                    label = { Text(stringResource(R.string.target_folder_name)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -252,10 +254,10 @@ private fun CreateFolderDialog(viewModel: ImportSessionViewModel) {
             }
         },
         confirmButton = {
-            TextButton(onClick = viewModel::createFolder) { Text("创建") }
+            TextButton(onClick = viewModel::createFolder) { Text(stringResource(R.string.target_create)) }
         },
         dismissButton = {
-            TextButton(onClick = viewModel::dismissCreateFolder) { Text("取消") }
+            TextButton(onClick = viewModel::dismissCreateFolder) { Text(stringResource(R.string.import_cancel)) }
         },
     )
 }

@@ -1,4 +1,5 @@
 package com.anythingllm.importer.ui.logs
+import com.anythingllm.importer.R
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -33,6 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.anythingllm.importer.data.log.ImportLogEntry
@@ -93,20 +95,20 @@ fun LogsScreen(
                             onClick = viewModel::requestExportAll,
                             modifier = Modifier.weight(1f),
                             enabled = state.files.isNotEmpty(),
-                        ) { Text("导出全部") }
+                        ) { Text(stringResource(R.string.logs_export_all)) }
                         OutlinedButton(
                             onClick = viewModel::cleanupOld,
                             modifier = Modifier.weight(1f),
-                        ) { Text("清理 30 天前") }
+                        ) { Text(stringResource(R.string.logs_clean_30)) }
                         OutlinedButton(
                             onClick = { confirmDeleteAll = true },
                             modifier = Modifier.weight(1f),
                             enabled = state.files.isNotEmpty(),
-                        ) { Text("清空日志") }
+                        ) { Text(stringResource(R.string.logs_clear)) }
                     }
                     if (state.files.isEmpty()) {
                         Text(
-                            "暂无日志文件(导入完成后自动生成 import-YYYYMMDD.jsonl)",
+                            stringResource(R.string.logs_empty),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -140,16 +142,16 @@ fun LogsScreen(
     if (confirmDeleteAll) {
         AlertDialog(
             onDismissRequest = { confirmDeleteAll = false },
-            title = { Text("清空全部日志") },
-            text = { Text("将删除所有 import-*.jsonl 日志文件,不可恢复。确定继续?") },
+            title = { Text(stringResource(R.string.logs_clear_title)) },
+            text = { Text(stringResource(R.string.logs_clear_msg)) },
             confirmButton = {
                 TextButton(onClick = {
                     viewModel.deleteAll()
                     confirmDeleteAll = false
-                }) { Text("删除") }
+                }) { Text(stringResource(R.string.common_delete)) }
             },
             dismissButton = {
-                TextButton(onClick = { confirmDeleteAll = false }) { Text("取消") }
+                TextButton(onClick = { confirmDeleteAll = false }) { Text(stringResource(R.string.import_cancel)) }
             },
         )
     }
@@ -168,16 +170,21 @@ private fun LogFileCard(
                 Column(Modifier.weight(1f)) {
                     Text(info.name, style = MaterialTheme.typography.bodyLarge)
                     Text(
-                        "${info.date} · ${info.lineCount} 行 · ${formatBytes(info.sizeBytes)}",
+                        stringResource(
+                            R.string.logs_line_summary,
+                            info.date,
+                            info.lineCount,
+                            formatBytes(info.sizeBytes),
+                        ),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                TextButton(onClick = onOpen) { Text("查看") }
+                TextButton(onClick = onOpen) { Text(stringResource(R.string.logs_view)) }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextButton(onClick = onExport) { Text("导出") }
-                TextButton(onClick = onDelete) { Text("删除") }
+                TextButton(onClick = onExport) { Text(stringResource(R.string.logs_export)) }
+                TextButton(onClick = onDelete) { Text(stringResource(R.string.common_delete)) }
             }
         }
     }
@@ -204,13 +211,18 @@ private fun EntryCard(entry: ImportLogEntry) {
                 )
             }
             Text(
-                "动作 ${entry.action} · 目标 ${entry.folder}/${entry.workspace} · 存储名 ${entry.storageName}" +
-                    (if (entry.retries > 0) " · 重试 ${entry.retries} 次" else ""),
+                stringResource(
+                    R.string.logs_line_action,
+                    entry.action,
+                    entry.folder,
+                    entry.workspace,
+                    entry.storageName,
+                ) + (if (entry.retries > 0) stringResource(R.string.logs_line_retries, entry.retries) else ""),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             entry.error?.let {
-                Text("错误: $it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                Text(stringResource(R.string.logs_error, it), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
             }
             Text(entry.time, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }

@@ -1,4 +1,252 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- v1.4 UI-13:全部 UI 层用户可见文案资源化(2026-09-13)。
+     规则:静态文案直接引用;带参数文案用 %1$s/%1$d 格式占位。ViewModel 错误文案暂留代码(需 stringProvider 注入,列为后续项)。 -->
 <resources>
     <string name="app_name">AnythingLLM 批量导入</string>
+
+    <!-- 通用 -->
+    <string name="common_back">返回</string>
+    <string name="common_cancel">取消</string>
+    <string name="common_delete">删除</string>
+    <string name="common_confirm">确定</string>
+    <string name="common_refresh">刷新</string>
+    <string name="common_loading">正在加载配置…</string>
+    <string name="common_done">完成</string>
+    <string name="common_test_connecting">测试中…</string>
+    <string name="common_test_connect">测试连接</string>
+    <string name="common_saving">保存中…</string>
+    <string name="common_save_back">保存并返回</string>
+
+    <!-- 首页(三 Tab) -->
+    <string name="home_tab_inbox">收集箱</string>
+    <string name="home_tab_knowledge">知识库</string>
+    <string name="home_tab_library">资料库</string>
+    <string name="home_quick_import">立即导入(v1.0 即时流程)</string>
+
+    <!-- 收集箱 Tab -->
+    <string name="collect_select_all">全选</string>
+    <string name="collect_deselect_all">取消全选</string>
+    <string name="collect_pending_count">待整理 %1$d 条</string>
+    <string name="collect_empty">收集箱为空:通过系统分享(文件/链接)或上方导入入口收集,回家后批量整理。</string>
+    <string name="collect_mark_selected">标记所选(%1$d)</string>
+    <string name="collect_archive_selected">归入资料库</string>
+    <string name="collect_delete_selected">删除所选</string>
+    <string name="collect_mark_title">标记目标</string>
+    <string name="collect_target_folder_required">目标文件夹(必选)</string>
+    <string name="collect_no_snapshot">暂无快照:请先在知识库页连接服务器刷新结构</string>
+    <string name="collect_workspace_optional">嵌入工作区(可选,不选=同步模式)</string>
+    <string name="collect_mark_confirm">标记</string>
+    <string name="collect_archive_title">归入资料库</string>
+    <string name="collect_archive_root">资料库根目录</string>
+    <string name="collect_archive_no_folder">暂无文件夹,可先选根目录,再到资料库页新建/整理</string>
+    <string name="collect_archive_confirm">归档</string>
+
+    <!-- 知识库 Tab -->
+    <string name="knowledge_open_settings">服务器设置</string>
+    <string name="knowledge_open_logs">查看日志</string>
+    <string name="knowledge_unmark">取消标记</string>
+    <string name="knowledge_sync_title">连接服务器并同步嵌入</string>
+    <string name="knowledge_offline_hint">未连接服务器(未安装 AnythingLLM 也可用):请到「资料库」Tab 归档文件,并通过 FTP 同步到 PC。</string>
+    <string name="knowledge_sync_progress">同步进度 %1$d/%2$d</string>
+    <string name="knowledge_sync_done"> · 完成</string>
+    <string name="knowledge_sync_summary">成功 %1$d · 跳过 %2$d · 失败 %3$d</string>
+    <string name="knowledge_sync_cleaned">同步完成,已执行条目的文件原件已自动清理(FR-26)</string>
+    <string name="knowledge_diff_title">结构变化</string>
+    <string name="knowledge_diff_add_folder">+ 文件夹: %1$s</string>
+    <string name="knowledge_diff_remove_folder">- 文件夹: %1$s</string>
+    <string name="knowledge_diff_add_ws">+ 工作区: %1$s</string>
+    <string name="knowledge_diff_remove_ws">- 工作区: %1$s</string>
+    <string name="knowledge_snapshot_title">知识库结构(快照)</string>
+    <string name="knowledge_snapshot_time">快照时间: %1$s</string>
+    <string name="knowledge_snapshot_empty">暂无快照,连接服务器后缓存(断网可用)</string>
+    <string name="knowledge_folders">文档文件夹(%1$d)</string>
+    <string name="knowledge_workspaces">工作区(%1$d)</string>
+    <string name="knowledge_marked">已标记待执行(%1$d)</string>
+    <string name="knowledge_marked_empty">暂无已标记条目:在收集箱勾选后标记目标,即移入本区。</string>
+    <string name="knowledge_mark_embed"> / 嵌入:%1$s</string>
+    <string name="knowledge_mark_sync_mode"> / 同步模式(不嵌入)</string>
+    <string name="knowledge_mark_folder_missing">目标文件夹已失效(执行时将自动重建)</string>
+    <string name="knowledge_mark_ws_missing">目标工作区已删除,请取消后重新标记</string>
+
+    <!-- 资料库 Tab -->
+    <string name="library_parent">上级</string>
+    <string name="library_title">资料库</string>
+    <string name="library_ftp_settings">FTP 设置</string>
+    <string name="library_ftp_syncing">同步中…</string>
+    <string name="library_ftp_sync">同步到 PC</string>
+    <string name="library_new_folder">新建文件夹</string>
+    <string name="library_ftp_not_configured">未配置 FTP 服务器:请点右上角 ⚙ 填写 PC 地址(PC 运行 tools/ftp-server 脚本),手机与 PC 需同一局域网。</string>
+    <string name="library_ftp_progress">FTP 同步 %1$d/%2$d</string>
+    <string name="library_ftp_done"> · 完成</string>
+    <string name="library_ftp_summary">成功 %1$d · 失败 %2$d</string>
+    <string name="library_ftp_rest"> …其余 %1$d 条</string>
+    <string name="library_ftp_no_pending">没有待同步条目(资料库为空或已全部同步)</string>
+    <string name="library_empty">资料库为空。\n用法:① 在「收集箱」勾选条目 → 「归入资料库」归档到文件夹;② 或在此新建文件夹组织目录;③ 点「同步到 PC」上传到 PC。</string>
+    <string name="library_rename_title">重命名文件夹</string>
+    <string name="library_delete_folder_title">删除文件夹</string>
+    <string name="library_delete_folder_msg">「%1$s」将被删除,其子文件夹与条目会上移到上级目录,文件本身不会删除。确认?</string>
+    <string name="library_delete_entry_title">删除条目</string>
+    <string name="library_delete_entry_msg">「%1$s」将从资料库删除,文件副本一并删除。确认?</string>
+    <string name="library_folder_items">文件夹 · %1$d 个子项</string>
+    <string name="library_folder_ops">文件夹操作</string>
+    <string name="library_menu_open">进入</string>
+    <string name="library_menu_rename">重命名</string>
+    <string name="library_entry_ops">条目操作</string>
+    <string name="library_menu_move">移动到…</string>
+    <string name="library_synced">已同步</string>
+    <string name="library_unsynced">未同步</string>
+    <string name="library_name_label">名称</string>
+    <string name="library_move_title">移动到…</string>
+    <string name="library_move_root">资料库根目录</string>
+    <string name="library_move_confirm">移动</string>
+
+    <!-- 导入进度 -->
+    <string name="import_title">导入进度</string>
+    <string name="import_not_started">导入尚未开始</string>
+    <string name="import_summary">共 %1$d · 成功 %2$d · 失败 %3$d · 跳过 %4$d</string>
+    <string name="import_cancelled_part"> · 取消 %1$d</string>
+    <string name="import_phase_running">进行中</string>
+    <string name="import_phase_paused">已暂停</string>
+    <string name="import_phase_cancelled">已取消</string>
+    <string name="import_phase_done">已完成</string>
+    <string name="import_continue">继续</string>
+    <string name="import_pause">暂停</string>
+    <string name="import_cancel">取消</string>
+    <string name="import_retry_failed">重试失败项(%1$d)</string>
+    <string name="import_retry_file">重试此文件</string>
+    <string name="import_item_waiting">等待中</string>
+    <string name="import_item_uploading_retry">上传重试 %1$d/%2$d</string>
+    <string name="import_item_uploading">上传中</string>
+    <string name="import_item_waiting_embed">等待嵌入</string>
+    <string name="import_item_verifying">验证嵌入(第%1$d次)</string>
+    <string name="import_item_success">成功</string>
+    <string name="import_item_failed">失败</string>
+    <string name="import_item_skipped">已跳过(重复)</string>
+    <string name="import_item_cancelled">已取消</string>
+    <string name="import_storage_name">存储名: %1$s</string>
+    <string name="import_reason">原因: %1$s</string>
+    <string name="import_duplicate_title">检测到重复文档</string>
+    <string name="import_duplicate_msg">《%1$s》在服务器已存在 %2$d 个同名单据。请选择处理方式:</string>
+    <string name="import_apply_all">应用到全部重复文件</string>
+    <string name="import_abort_this">中止本次</string>
+    <string name="import_action_keep">保留(继续上传,允许并存)</string>
+    <string name="import_action_skip">跳过(不上传该文档)</string>
+    <string name="import_action_replace">替换(删除旧文档后上传新文档)</string>
+    <string name="import_action_abort">中止(停止整个导入)</string>
+    <string name="import_exit_title_running">导入进行中</string>
+    <string name="import_exit_title_done">导入已完成</string>
+    <string name="import_exit_msg_running">确定取消导入并返回吗?已上传的文档可能已嵌入,可稍后查重处理。</string>
+    <string name="import_exit_msg_done">确定返回主页吗?</string>
+
+    <!-- 导入目标 -->
+    <string name="target_title">导入目标</string>
+    <string name="target_loading">正在加载文件夹与工作区…</string>
+    <string name="target_load_error">加载失败: %1$s</string>
+    <string name="target_no_files">没有待导入的文件,请返回重新选择</string>
+    <string name="target_mode_unified">统一模式</string>
+    <string name="target_mode_itemized">逐项模式</string>
+    <string name="target_mode_unified_desc">全部 %1$d 个文件 → 同一文件夹 + 同一工作区</string>
+    <string name="target_mode_itemized_desc">每个文件单独选择文件夹与工作区</string>
+    <string name="target_folder_label">文档文件夹</string>
+    <string name="target_workspace_label">目标工作区</string>
+    <string name="target_start_import">开始导入 %1$d 个文件</string>
+    <string name="target_folder">文件夹</string>
+    <string name="target_workspace">工作区</string>
+    <string name="target_new_folder"> ＋ 新建文件夹…</string>
+    <string name="target_new_folder_title">新建文档文件夹</string>
+    <string name="target_folder_name">文件夹名</string>
+    <string name="target_create">创建</string>
+
+    <!-- 日志 -->
+    <string name="logs_title">导入日志</string>
+    <string name="logs_export_all">导出全部</string>
+    <string name="logs_clean_30">清理 30 天前</string>
+    <string name="logs_clear">清空日志</string>
+    <string name="logs_empty">暂无日志文件(导入完成后自动生成 import-YYYYMMDD.jsonl)</string>
+    <string name="logs_unparseable">此文件无可解析日志行</string>
+    <string name="logs_clear_title">清空全部日志</string>
+    <string name="logs_clear_msg">将删除所有 import-*.jsonl 日志文件,不可恢复。确定继续?</string>
+    <string name="logs_view">查看</string>
+    <string name="logs_export">导出</string>
+    <string name="logs_line_summary">%1$s · %2$d 行 · %3$s</string>
+    <string name="logs_line_action">动作 %1$s · 目标 %2$s/%3$s · 存储名 %4$s</string>
+    <string name="logs_line_retries"> · 重试 %1$d 次</string>
+    <string name="logs_error">错误: %1$s</string>
+
+    <!-- 选择文件 -->
+    <string name="select_title">选择文件</string>
+    <string name="select_hint">从本机存储选择一个或多个文档\n\n</string>
+    <string name="select_supported">支持: %1$s</string>
+    <string name="select_max_size">单文件上限: %1$dMB</string>
+    <string name="select_selected">已选 %1$d 个文件 · 共 %2$s</string>
+    <string name="select_clear">清空</string>
+    <string name="select_reselect">重新选择</string>
+    <string name="select_validate">开始校验</string>
+
+    <!-- 设置 -->
+    <string name="settings_server_url">服务器地址 (baseUrl)</string>
+    <string name="settings_server_hint">模拟器用 10.0.2.2 访问宿主机;真机填局域网 IP</string>
+    <string name="settings_api_key">API Key</string>
+    <string name="settings_show">显示</string>
+    <string name="settings_hide">隐藏</string>
+    <string name="settings_ftp_section">FTP 同步(未安装 AnythingLLM 时用)</string>
+    <string name="settings_ftp_hint">在 PC 上运行 tools/ftp-server 脚本后,手机把「资料库」同步到 PC 目录。手机与 PC 需在同一局域网。</string>
+    <string name="settings_ftp_host">FTP 主机(PC 局域网 IP)</string>
+    <string name="settings_ftp_host_placeholder">如 192.168.1.100</string>
+    <string name="settings_ftp_port">端口</string>
+    <string name="settings_ftp_remote">远端根目录</string>
+    <string name="settings_ftp_user">用户名</string>
+    <string name="settings_ftp_password">密码</string>
+    <string name="settings_advanced">高级参数</string>
+    <string name="settings_expand_collapse">展开/折叠</string>
+    <string name="settings_timeout_sec">超时(秒)</string>
+    <string name="settings_probe">探活</string>
+    <string name="settings_upload">上传</string>
+    <string name="settings_embed">嵌入</string>
+    <string name="settings_chat">聊天</string>
+    <string name="settings_poll_sec">嵌入验证轮询(秒)</string>
+    <string name="settings_timeout">超时</string>
+    <string name="settings_start_interval">起始间隔</string>
+    <string name="settings_max_interval">最大间隔</string>
+    <string name="settings_files_retry">文件与重试</string>
+    <string name="settings_max_mb">大小上限MB</string>
+    <string name="settings_retries">重试次数</string>
+    <string name="settings_backoff_s">重试退避s</string>
+    <string name="settings_concurrency">并发上传</string>
+    <string name="settings_extensions">允许的扩展名(逗号分隔)</string>
+    <string name="settings_filename">文件名与重复</string>
+    <string name="settings_filename_policy">文件名策略</string>
+    <string name="settings_dup_detect">重复检测</string>
+    <string name="settings_dup_detect_hint">按原始文件名比对服务端已存文档</string>
+    <string name="settings_dup_default">重复默认动作</string>
+    <string name="settings_misc">其他</string>
+    <string name="settings_post_import_query">导入后测试检索</string>
+    <string name="settings_post_import_hint">可选:完成后向工作区发 query 验证可检索</string>
+    <string name="settings_log_retention">日志保留天数</string>
+    <string name="settings_appearance">外观</string>
+    <string name="settings_theme_mode">主题模式</string>
+    <string name="settings_conn_ok">连接正常 · %1$d 个工作区</string>
+    <string name="settings_conn_fail">无法连接服务器,请检查地址与网络</string>
+    <string name="settings_conn_bad_key">API Key 无效</string>
+    <string name="settings_policy_unicode">unicode (中文转 uXXXX)</string>
+    <string name="settings_policy_strip">strip (丢弃非 ASCII)</string>
+    <string name="settings_policy_keep">keep (原样保留)</string>
+    <string name="settings_dup_ask">询问</string>
+    <string name="settings_dup_keep">全部保留</string>
+    <string name="settings_dup_skip">跳过</string>
+    <string name="settings_dup_replace">替换</string>
+    <string name="settings_dup_abort">中止</string>
+    <string name="settings_theme_system">跟随系统</string>
+    <string name="settings_theme_light">浅色</string>
+    <string name="settings_theme_dark">深色</string>
+
+    <!-- 预校验结果 -->
+    <string name="validation_title">预校验结果</string>
+    <string name="validation_empty">暂无校验结果</string>
+    <string name="validation_summary">通过 %1$d 个 · %2$s   拒绝 %3$d 个</string>
+    <string name="validation_passed">通过</string>
+    <string name="validation_rejected">拒绝</string>
+    <string name="validation_reselect">重新选择</string>
+    <string name="validation_next">下一步:选择目标</string>
+    <string name="validation_storage_name">存储名: %1$s</string>
 </resources>

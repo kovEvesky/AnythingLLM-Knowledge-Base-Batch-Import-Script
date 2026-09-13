@@ -1,4 +1,5 @@
 package com.anythingllm.importer.ui.settings
+import com.anythingllm.importer.R
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -48,6 +49,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.anythingllm.importer.AnythingLLMApp
@@ -95,7 +97,7 @@ fun SettingsScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         CircularProgressIndicator(modifier = Modifier.width(24.dp), strokeWidth = 2.dp)
                         Spacer(Modifier.width(12.dp))
-                        Text("正在加载配置…")
+                        Text(stringResource(R.string.common_loading))
                     }
                     return@Column
                 }
@@ -105,10 +107,10 @@ fun SettingsScreen(
                     value = state.baseUrl,
                     onValueChange = viewModel::onBaseUrlChange,
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("服务器地址 (baseUrl)") },
+                    label = { Text(stringResource(R.string.settings_server_url)) },
                     placeholder = { Text("http://10.0.2.2:3001") },
                     singleLine = true,
-                    supportingText = { Text("模拟器用 10.0.2.2 访问宿主机;真机填局域网 IP") },
+                    supportingText = { Text(stringResource(R.string.settings_server_hint)) },
                 )
 
                 // ===== API Key =====
@@ -116,7 +118,7 @@ fun SettingsScreen(
                     value = state.apiKey,
                     onValueChange = viewModel::onApiKeyChange,
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("API Key") },
+                    label = { Text(stringResource(R.string.settings_api_key)) },
                     singleLine = true,
                     visualTransformation = if (state.showApiKey) {
                         VisualTransformation.None
@@ -163,7 +165,7 @@ fun SettingsScreen(
                     ) {
                         Text("FTP 同步(未安装 AnythingLLM 时用)", style = MaterialTheme.typography.titleMedium)
                         Text(
-                            "在 PC 上运行 tools/ftp-server 脚本后,手机把「资料库」同步到 PC 目录。手机与 PC 需在同一局域网。",
+                            stringResource(R.string.settings_ftp_hint),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -171,8 +173,8 @@ fun SettingsScreen(
                             value = state.ftpHost,
                             onValueChange = viewModel::onFtpHostChange,
                             modifier = Modifier.fillMaxWidth(),
-                            label = { Text("FTP 主机(PC 局域网 IP)") },
-                            placeholder = { Text("如 192.168.1.100") },
+                            label = { Text(stringResource(R.string.settings_ftp_host)) },
+                            placeholder = { Text(stringResource(R.string.settings_ftp_host_placeholder)) },
                             singleLine = true,
                         )
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -180,7 +182,7 @@ fun SettingsScreen(
                                 value = state.ftpPort,
                                 onValueChange = viewModel::onFtpPortChange,
                                 modifier = Modifier.weight(1f),
-                                label = { Text("端口") },
+                                label = { Text(stringResource(R.string.settings_ftp_port)) },
                                 singleLine = true,
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             )
@@ -188,7 +190,7 @@ fun SettingsScreen(
                                 value = state.ftpRemoteRoot,
                                 onValueChange = viewModel::onFtpRemoteRootChange,
                                 modifier = Modifier.weight(1f),
-                                label = { Text("远端根目录") },
+                                label = { Text(stringResource(R.string.settings_ftp_remote)) },
                                 singleLine = true,
                             )
                         }
@@ -197,14 +199,14 @@ fun SettingsScreen(
                                 value = state.ftpUser,
                                 onValueChange = viewModel::onFtpUserChange,
                                 modifier = Modifier.weight(1f),
-                                label = { Text("用户名") },
+                                label = { Text(stringResource(R.string.settings_ftp_user)) },
                                 singleLine = true,
                             )
                             OutlinedTextField(
                                 value = state.ftpPassword,
                                 onValueChange = viewModel::onFtpPasswordChange,
                                 modifier = Modifier.weight(1f),
-                                label = { Text("密码") },
+                                label = { Text(stringResource(R.string.settings_ftp_password)) },
                                 singleLine = true,
                                 visualTransformation = PasswordVisualTransformation(),
                             )
@@ -220,7 +222,7 @@ fun SettingsScreen(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text(
-                                "高级参数",
+                                stringResource(R.string.settings_advanced),
                                 style = MaterialTheme.typography.titleMedium,
                                 modifier = Modifier.weight(1f),
                             )
@@ -268,7 +270,7 @@ fun SettingsScreen(
                                 value = state.allowedExtensions,
                                 onValueChange = viewModel::onExtensionsChange,
                                 modifier = Modifier.fillMaxWidth(),
-                                label = { Text("允许的扩展名(逗号分隔)") },
+                                label = { Text(stringResource(R.string.settings_extensions)) },
                                 singleLine = true,
                             )
 

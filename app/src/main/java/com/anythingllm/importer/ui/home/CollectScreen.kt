@@ -1,7 +1,10 @@
 package com.anythingllm.importer.ui.home
+import com.anythingllm.importer.R
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,14 +13,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
+import androidx.compose.material.icons.filled.Link
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -31,8 +39,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import com.anythingllm.importer.data.collect.CollectEntry
 import com.anythingllm.importer.data.collect.EntryType
 import com.anythingllm.importer.util.formatBytes
@@ -58,18 +68,26 @@ fun CollectScreen(
     Column(Modifier.fillMaxSize().padding(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                "待整理 ${state.pendingGroups.sumOf { it.second.size }} 条",
+                stringResource(R.string.collect_pending_count, state.pendingGroups.sumOf { it.second.size }),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.weight(1f),
             )
-            TextButton(onClick = onToggleSelectAll) { Text(if (state.selectedIds.size == allPendingIds(state).size) "取消全选" else "全选") }
-            TextButton(onClick = onRefresh) { Text("刷新") }
+            TextButton(onClick = onToggleSelectAll) {
+                Text(
+                    if (state.selectedIds.size == allPendingIds(state).size) {
+                        stringResource(R.string.collect_deselect_all)
+                    } else {
+                        stringResource(R.string.collect_select_all)
+                    },
+                )
+            }
+            TextButton(onClick = onRefresh) { Text(stringResource(R.string.common_refresh)) }
         }
 
         if (state.pendingGroups.isEmpty()) {
             Spacer(Modifier.height(24.dp))
             Text(
-                "收集箱为空:通过系统分享(文件/链接)或上方导入入口收集,回家后批量整理。",
+                stringResource(R.string.collect_empty),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -100,13 +118,13 @@ fun CollectScreen(
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = { showMarkDialog = true }, modifier = Modifier.weight(1f)) {
-                    Text("标记所选(${state.selectedIds.size})")
+                    Text(stringResource(R.string.collect_mark_selected, state.selectedIds.size))
                 }
                 Button(onClick = { showArchiveDialog = true }, modifier = Modifier.weight(1f)) {
-                    Text("归入资料库")
+                    Text(stringResource(R.string.collect_archive_title))
                 }
                 OutlinedButton(onClick = onDeleteSelected, modifier = Modifier.weight(1f)) {
-                    Text("删除所选")
+                    Text(stringResource(R.string.collect_delete_selected))
                 }
             }
         }
@@ -138,6 +156,32 @@ fun CollectScreen(
 private fun allPendingIds(state: CollectViewModel.UiState): Set<String> =
     state.pendingGroups.flatMap { it.second }.map { it.id }.toSet()
 
+/** UI-12:条目类型徽标(文件=InsertDriveFile/链接=Link),36dp 圆角容器色底 */
+@Composable
+private fun TypeBadge(type: EntryType) {
+    val (icon, container, tint) = when (type) {
+        EntryType.FILE -> Triple(
+            Icons.AutoMirrored.Filled.InsertDriveFile,
+            MaterialTheme.colorScheme.primaryContainer,
+            MaterialTheme.colorScheme.onPrimaryContainer,
+        )
+        EntryType.LINK -> Triple(
+            Icons.Filled.Link,
+            MaterialTheme.colorScheme.secondaryContainer,
+            MaterialTheme.colorScheme.onSecondaryContainer,
+        )
+    }
+    Box(
+        modifier = Modifier
+            .size(36.dp)
+            .clip(MaterialTheme.shapes.small)
+            .background(container),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(18.dp))
+    }
+}
+
 @Composable
 private fun EntryRow(
     entry: CollectEntry,
@@ -150,6 +194,9 @@ private fun EntryRow(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Checkbox(checked = selected, onCheckedChange = { onToggle() })
+            // UI-12:条目类型徽标(文件/链接),一眼区分来源
+            TypeBadge(entry.type)
+            Spacer(Modifier.width(8.dp))
             Column(Modifier.weight(1f)) {
                 Text(
                     entry.displayTitle,
@@ -198,13 +245,13 @@ private fun MarkDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("标记目标") },
+        title = { Text(stringResource(R.string.collect_mark_title)) },
         text = {
             Column {
                 Text("目标文件夹(必选)", style = MaterialTheme.typography.labelLarge)
                 if (folders.isEmpty()) {
                     Text(
-                        "暂无快照:请先在知识库页连接服务器刷新结构",
+                        stringResource(R.string.collect_no_snapshot),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.error,
                     )
@@ -220,7 +267,7 @@ private fun MarkDialog(
                     }
                 }
                 Spacer(Modifier.height(8.dp))
-                Text("嵌入工作区(可选,不选=同步模式)", style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(R.string.collect_workspace_optional), style = MaterialTheme.typography.labelLarge)
                 LazyColumn(Modifier.heightIn(max = 180.dp)) {
                     items(workspaces) { w ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -235,9 +282,9 @@ private fun MarkDialog(
             TextButton(
                 enabled = folder != null,
                 onClick = { folder?.let { onConfirm(it, workspace) } },
-            ) { Text("标记") }
+            ) { Text(stringResource(R.string.collect_mark_confirm)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.import_cancel)) } },
     )
 }
 
@@ -251,7 +298,7 @@ private fun ArchiveDialog(
     var target by remember { mutableStateOf<String?>(null) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("归入资料库") },
+        title = { Text(stringResource(R.string.collect_archive_title)) },
         text = {
             Column {
                 Row(
@@ -263,7 +310,7 @@ private fun ArchiveDialog(
                 }
                 if (folders.isEmpty()) {
                     Text(
-                        "暂无文件夹,可先选根目录,再到资料库页新建/整理",
+                        stringResource(R.string.collect_archive_no_folder),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -288,9 +335,9 @@ private fun ArchiveDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(target) }) { Text("归档") }
+            TextButton(onClick = { onConfirm(target) }) { Text(stringResource(R.string.collect_archive_confirm)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.import_cancel)) } },
     )
 }
 

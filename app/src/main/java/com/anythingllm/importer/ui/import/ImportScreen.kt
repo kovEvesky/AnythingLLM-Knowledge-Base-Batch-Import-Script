@@ -1,4 +1,5 @@
 package com.anythingllm.importer.ui.import
+import com.anythingllm.importer.R
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
@@ -38,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.anythingllm.importer.data.config.DuplicateAction
 import com.anythingllm.importer.domain.import.ImportItemState
@@ -62,7 +64,7 @@ fun ImportScreen(
     Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("导入进度") },
+                    title = { Text(stringResource(R.string.import_title)) },
                     navigationIcon = {
                         IconButton(onClick = { if (running) viewModel.showExitConfirm() else onDone() }) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
@@ -87,8 +89,13 @@ fun ImportScreen(
                 val total = run.items.size
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        "共 $total · 成功 ${run.successCount} · 失败 ${run.failedCount} · 跳过 ${run.skippedCount}" +
-                            if (run.cancelledCount > 0) " · 取消 ${run.cancelledCount}" else "",
+                        stringResource(
+                            R.string.import_summary,
+                            total,
+                            run.successCount,
+                            run.failedCount,
+                            run.skippedCount,
+                        ) + (if (run.cancelledCount > 0) stringResource(R.string.import_cancelled_part, run.cancelledCount) else ""),
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.weight(1f),
                     )
@@ -131,21 +138,21 @@ fun ImportScreen(
                             onClick = viewModel::showExitConfirm,
                             modifier = Modifier.weight(1f),
                         ) {
-                            Text("取消")
+                            Text(stringResource(R.string.import_cancel))
                         }
                     } else if (run.failedCount > 0) {
                         OutlinedButton(
                             onClick = viewModel::retryFailed,
                             modifier = Modifier.weight(1f),
                         ) {
-                            Text("重试失败项(${run.failedCount})")
+                            Text(stringResource(R.string.import_retry_failed, run.failedCount))
                         }
                         Button(onClick = onDone, modifier = Modifier.weight(1f)) {
-                            Text("完成")
+                            Text(stringResource(R.string.common_done))
                         }
                     } else {
                         Button(onClick = onDone, modifier = Modifier.fillMaxWidth()) {
-                            Text("完成")
+                            Text(stringResource(R.string.common_done))
                         }
                     }
                 }
@@ -192,7 +199,7 @@ private fun ItemCard(
                 )
             }
             Text(
-                "存储名: ${item.target.storageName}",
+                stringResource(R.string.import_storage_name, item.target.storageName),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -214,7 +221,7 @@ private fun ItemCard(
                     item.error?.let {
                         Text("原因: $it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
                     }
-                    TextButton(onClick = onRetry) { Text("重试此文件") }
+                    TextButton(onClick = onRetry) { Text(stringResource(R.string.import_retry_file)) }
                 }
                 else -> Unit
             }
@@ -252,10 +259,10 @@ private fun DuplicateDialog(
     var applyAll by remember { mutableStateOf(false) }
     AlertDialog(
         onDismissRequest = { /* 必须选择动作 */ },
-        title = { Text("检测到重复文档") },
+        title = { Text(stringResource(R.string.import_duplicate_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("《$title》在服务器已存在 $count 个同名单据。请选择处理方式:")
+                Text(stringResource(R.string.import_duplicate_msg, title, count))
                 // UI-05:四动作改单选列表,主次清晰、整行可点(无障碍)
                 DuplicateAction.entries.filter { it != DuplicateAction.ASK }.forEach { a ->
                     Row(
@@ -269,15 +276,15 @@ private fun DuplicateDialog(
                 HorizontalDivider()
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(checked = applyAll, onCheckedChange = { applyAll = it })
-                    Text("应用到全部重复文件")
+                    Text(stringResource(R.string.import_apply_all))
                 }
             }
         },
         confirmButton = {
-            TextButton(onClick = { onAnswer(action, applyAll) }) { Text("确定") }
+            TextButton(onClick = { onAnswer(action, applyAll) }) { Text(stringResource(R.string.common_confirm)) }
         },
         dismissButton = {
-            TextButton(onClick = { onAnswer(DuplicateAction.ABORT, applyAll) }) { Text("中止本次") }
+            TextButton(onClick = { onAnswer(DuplicateAction.ABORT, applyAll) }) { Text(stringResource(R.string.import_abort_this)) }
         },
     )
 }
@@ -304,7 +311,7 @@ private fun ExitConfirmDialog(
                 if (running) "确定取消导入并返回吗?已上传的文档可能已嵌入,可稍后查重处理。" else "确定返回主页吗?",
             )
         },
-        confirmButton = { TextButton(onClick = onConfirm) { Text("确定") } },
-        dismissButton = { TextButton(onClick = onCancel) { Text("取消") } },
+        confirmButton = { TextButton(onClick = onConfirm) { Text(stringResource(R.string.common_confirm)) } },
+        dismissButton = { TextButton(onClick = onCancel) { Text(stringResource(R.string.import_cancel)) } },
     )
 }
