@@ -9,6 +9,7 @@
 
 | 版本 | 日期 | 阶段 | 摘要 |
 |---|---|---|---|
+| 1.4.0 | 2026-09-13 | v1.4 UI 优化 | 26 项 UI 诊断 + NEW-01~06 补充按 §6.1 全部落地:设计系统/深色窗口/文案资源化/信息架构/首启引导;单测 144 全绿,模拟器 uiautomator 回归通过 |
 | 1.3.0 | 2026-09-11 | v1.3 开发 | 未安装 AnythingLLM 用户全程可用:资料库目录树 + FTP 同步到 PC;单测 144 全绿,模拟器端到端全链路通过(收集→归档→目录管理→FTP 同步→增量/变更重传) |
 | 1.2.0-rc | 2026-09-11 | v1.2 开发 | 真机全面回归:链接/单选/多选分享、标记、同步、SAF 导入全链路通过;extractUris 修复生效(多选单 Uri 不再崩溃);服务器回归数据已清理 |
 | 1.0.0 | 2026-09-10 | 阶段 5 | 正式交付:深色模式、Release 签名、回归全过,发布 1.0.0 |
@@ -17,6 +18,40 @@
 | 0.2.0 | 2026-09-10 | 阶段 2 | SAF 选文件与预校验 |
 | 0.1.0 | 2026-09-10 | 阶段 0–1 | 环境搭建、配置与 API 层 |
 | 0.0.1 | 2026-09-10 | 初始化 | 项目骨架与构建链路 |
+
+---
+
+## [1.4.0] — v1.4 UI 优化(2026-09-13)
+
+里程碑:按《11-UI方案实况对比与补充建议.md》§6.1 执行顺序完成全部 26 项诊断修复 + NEW-01~06 补充(UI-24 Snackbar 统一 / UI-27 计数缓存评估后裁剪,纳入 v1.5 候选)。提交线:fe3f133(P0)→ cf9dc52(P1)→ 268d61b(P2)→ 3777b5a(P3)。单测 144 全绿;模拟器回归以 uiautomator 证据为准(截屏管道被模拟器残留应用污染,已移除无效果图)。
+
+### Added
+- **UI-19 首启引导**:AppConfig.guideSeen + ConfigRepository.GUIDE_SEEN/markGuideSeen()(独立写入),HomeScreen 三步引导 AlertDialog(收集/整理/导入),DataStore 持久化只弹一次。
+- **UI-20 服务器连接状态卡**(知识库):已连接(快照时间)/未连接("可走资料库 FTP 通道离线同步")/错误三态图标卡片,替换原纯文字错误块与 v1.3 offline hint。
+- **UI-21 同步按钮阶段化**(知识库 + 资料库):空闲=图标+文案,连接/同步中=进度圈+"同步中 x/y"。
+- **UI-22 比对结果结构化**:DiffRow(新增=Add 图标/移除=Remove 图标)。
+- **UI-23 页面过渡动画**:NavHost enter/exit/pop 过渡(淡入 + 1/20 屏宽滑入,≤220ms)。
+- **UI-18 空态图标化**:收集箱/知识库标记区/资料库空态统一 48dp Outlined.Inbox。
+- **NEW-02 资料库信息架构**:同步按钮阶段化 + SyncBadge 徽标(已同步 primaryContainer 底/未同步 surfaceVariant 底)替换纯文字、空态图标。
+- **NEW-05 结构化清单**:知识库文件夹/工作区清单图标化(Folder/Workspaces),明细首行加图标与计数。
+- UI-26 大字体适配:font_scale 1.3 模拟器实测布局不崩、文案不截断(ADB 验证)。
+
+### Changed
+- **P1 完整设计系统**(UI-07~10):Theme.kt 全量重写 — Light/Dark ColorScheme(品牌蓝 #3A5BA0 系 + 2E7D62 绿 tertiary)、AppTypography(标题加粗/中文行高)、AppShapes(8/12/16)、Spacing 体系。
+- **UI-01 深色窗口层**:新增 values-night/themes.xml(深色 Theme.AnythingLLM),修复暗色下窗口层(状态栏/导航栏/背景)白闪。
+- **UI-04 返回键统一**:Settings/Select/Logs/Target/Validation/Import 六页 TextButton("返回")→ IconButton+ArrowBack;Import 保留运行中退出确认。
+- **UI-11 状态图标化**:知识库 StatusIcon(Schedule/Sync/CheckCircle/ErrorOutline)、资料库 FtpStatusIcon、ValidationScreen ✓/✗→CheckCircle/ErrorOutline,均带语义 contentDescription。
+- **UI-12 类型徽标**:收集箱条目 TypeBadge(文件=InsertDriveFile/链接=Link,36dp 圆角容器色底)。
+- **UI-13 文案资源化**:strings.xml 1→~190 条(补回 app_name),WSL Python 脚本批量替换 90 处字面量,带参插值手工转 stringResource;10 文件补 `import com.anythingllm.importer.R`。
+- **UI-15 信息架构分区**:知识库页重组为"连接状态卡→同步入口→结构清单卡→已标记待执行"卡片分区。
+- **UI-16 detailLine 截断**:收集箱 detailLine maxLines=2 + Ellipsis。
+- **UI-25 无障碍**:HomeScreen 底部导航图标补 contentDescription,标题资源化(收集箱/知识库/资料库)。
+- NEW-01 三个对话框(Mark/Archive/Move)列表 forEach→LazyColumn + heightIn 可滚动;NEW-03 编译零 warning(4 处 deprecation 清理)。
+
+### Fixed
+- **UI-02/03** 长文件夹/工作区列表对话框内容溢出不可见→可滚动 + 条目截断。
+- **UI-05** 重复文件对话框按钮挤在一行 → RadioButton 单选(保留/跳过/中止)+ 整行可点 + 复选时禁用中止。
+- NEW-04 编译期修复实证:`RoundedCornerShape(Shape)` 非法→clip(shapes.small);`state.loadError` 委托属性 smart cast 不可→toString();InsertDriveFile deprecated→AutoMirrored。
 
 ---
 
