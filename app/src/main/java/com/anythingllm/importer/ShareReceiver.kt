@@ -69,7 +69,9 @@ class ShareReceiver : Activity() {
      * 分享器形态不一——EXTRA_STREAM 可能是单 Uri、ArrayList<Uri> 或 Parcelable[],
      * 且部分文件管理器只发 clipData 多 item。用 Bundle.get 原始对象做类型判断,
      * 避免 getParcelableArrayListExtra 在单 Uri 时抛 ClassCastException 导致接收崩溃无反应。
+     * get(String) 在新 SDK 标记 deprecated,但多形态分发无类型化替代,有意保留(编译卫生标注)。
      */
+    @Suppress("DEPRECATION")
     private fun extractUris(intent: Intent): List<Uri> {
         val result = LinkedHashSet<Uri>()
         intent.extras?.get(Intent.EXTRA_STREAM)?.let { raw ->

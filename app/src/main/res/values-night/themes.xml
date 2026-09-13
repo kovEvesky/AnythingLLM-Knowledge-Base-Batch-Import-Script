@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 深色变体(UI-01 修复):Compose 侧 AnyllLLMTheme 控制内容深浅,窗口层必须匹配,否则启动闪白/状态栏图标不可见 -->
+    <style name="Theme.AnythingLLM" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@android:color/black</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+    <!-- 分享接收器:透明、无预览,接收后立即结束不闪屏(深色下同样透明) -->
+    <style name="Theme.AnythingLLM.Transparent" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowDisablePreview">true</item>
+    </style>
+</resources>

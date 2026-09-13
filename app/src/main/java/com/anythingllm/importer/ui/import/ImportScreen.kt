@@ -1,6 +1,7 @@
 package com.anythingllm.importer.ui.import
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,14 +12,20 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -57,8 +64,8 @@ fun ImportScreen(
                 TopAppBar(
                     title = { Text("导入进度") },
                     navigationIcon = {
-                        TextButton(onClick = { if (running) viewModel.showExitConfirm() else onDone() }) {
-                            Text("返回")
+                        IconButton(onClick = { if (running) viewModel.showExitConfirm() else onDone() }) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
                         }
                     },
                 )
@@ -241,6 +248,7 @@ private fun DuplicateDialog(
     count: Int,
     onAnswer: (DuplicateAction, Boolean) -> Unit,
 ) {
+    var action by remember { mutableStateOf(DuplicateAction.REPLACE) }
     var applyAll by remember { mutableStateOf(false) }
     AlertDialog(
         onDismissRequest = { /* 必须选择动作 */ },
@@ -248,6 +256,17 @@ private fun DuplicateDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("《$title》在服务器已存在 $count 个同名单据。请选择处理方式:")
+                // UI-05:四动作改单选列表,主次清晰、整行可点(无障碍)
+                DuplicateAction.entries.filter { it != DuplicateAction.ASK }.forEach { a ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth().clickable { action = a },
+                    ) {
+                        RadioButton(selected = action == a, onClick = { action = a })
+                        Text(duplicateActionLabel(a), style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+                HorizontalDivider()
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(checked = applyAll, onCheckedChange = { applyAll = it })
                     Text("应用到全部重复文件")
@@ -255,16 +274,20 @@ private fun DuplicateDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = { onAnswer(DuplicateAction.REPLACE, applyAll) }) { Text("替换") }
+            TextButton(onClick = { onAnswer(action, applyAll) }) { Text("确定") }
         },
         dismissButton = {
-            Row {
-                TextButton(onClick = { onAnswer(DuplicateAction.KEEP, applyAll) }) { Text("保留") }
-                TextButton(onClick = { onAnswer(DuplicateAction.SKIP, applyAll) }) { Text("跳过") }
-                TextButton(onClick = { onAnswer(DuplicateAction.ABORT, applyAll) }) { Text("中止") }
-            }
+            TextButton(onClick = { onAnswer(DuplicateAction.ABORT, applyAll) }) { Text("中止本次") }
         },
     )
+}
+
+private fun duplicateActionLabel(a: DuplicateAction): String = when (a) {
+    DuplicateAction.KEEP -> "保留(继续上传,允许并存)"
+    DuplicateAction.SKIP -> "跳过(不上传该文档)"
+    DuplicateAction.REPLACE -> "替换(删除旧文档后上传新文档)"
+    DuplicateAction.ABORT -> "中止(停止整个导入)"
+    DuplicateAction.ASK -> "询问"
 }
 
 @Composable

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -30,6 +31,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.anythingllm.importer.data.collect.CollectEntry
 import com.anythingllm.importer.data.collect.EntryType
@@ -158,6 +160,8 @@ private fun EntryRow(
                     detailLine(entry),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }
@@ -205,19 +209,24 @@ private fun MarkDialog(
                         color = MaterialTheme.colorScheme.error,
                     )
                 } else {
-                    folders.forEach { f ->
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            RadioButton(selected = folder == f, onClick = { folder = f })
-                            Text(f, style = MaterialTheme.typography.bodyMedium)
+                    // UI-02:候选项可滚动,避免 10+ 项时对话框超高按钮被推出屏幕
+                    LazyColumn(Modifier.heightIn(max = 180.dp)) {
+                        items(folders) { f ->
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                RadioButton(selected = folder == f, onClick = { folder = f })
+                                Text(f, style = MaterialTheme.typography.bodyMedium)
+                            }
                         }
                     }
                 }
                 Spacer(Modifier.height(8.dp))
                 Text("嵌入工作区(可选,不选=同步模式)", style = MaterialTheme.typography.labelLarge)
-                workspaces.forEach { w ->
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        RadioButton(selected = workspace == w.slug, onClick = { workspace = w.slug })
-                        Text(w.name, style = MaterialTheme.typography.bodyMedium)
+                LazyColumn(Modifier.heightIn(max = 180.dp)) {
+                    items(workspaces) { w ->
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            RadioButton(selected = workspace == w.slug, onClick = { workspace = w.slug })
+                            Text(w.name, style = MaterialTheme.typography.bodyMedium)
+                        }
                     }
                 }
             }
@@ -259,17 +268,20 @@ private fun ArchiveDialog(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 } else {
-                    folders.forEach { folder ->
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth().clickable { target = folder.id },
-                        ) {
-                            RadioButton(selected = target == folder.id, onClick = { target = folder.id })
-                            // C-16 修复:显示父路径,避免嵌套/同名文件夹混淆
-                            Text(
-                                archiveFolderDisplayName(folder, folders),
-                                style = MaterialTheme.typography.bodyMedium,
-                            )
+                    // NEW-01:与 MarkDialog 同款可滚动单选列表,目录多时不溢出
+                    LazyColumn(Modifier.heightIn(max = 300.dp)) {
+                        items(folders) { folder ->
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth().clickable { target = folder.id },
+                            ) {
+                                RadioButton(selected = target == folder.id, onClick = { target = folder.id })
+                                // C-16 修复:显示父路径,避免嵌套/同名文件夹混淆
+                                Text(
+                                    archiveFolderDisplayName(folder, folders),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                )
+                            }
                         }
                     }
                 }

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -401,20 +402,23 @@ private fun MoveDialog(
                     Text("资料库根目录", style = MaterialTheme.typography.bodyMedium)
                 }
                 HorizontalDivider()
-                allFolders.forEach { folder ->
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth().clickable { target = folder.id },
-                    ) {
-                        androidx.compose.material3.RadioButton(
-                            selected = target == folder.id,
-                            onClick = { target = folder.id },
-                        )
-                        // C-16 修复:显示父路径,避免嵌套/同名文件夹混淆
-                        Text(
-                            folderDisplayName(folder, allFolders),
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
+                // NEW-01:目录多时可滚动,避免对话框超高
+                LazyColumn(Modifier.heightIn(max = 300.dp)) {
+                    items(allFolders) { folder ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth().clickable { target = folder.id },
+                        ) {
+                            androidx.compose.material3.RadioButton(
+                                selected = target == folder.id,
+                                onClick = { target = folder.id },
+                            )
+                            // C-16 修复:显示父路径,避免嵌套/同名文件夹混淆
+                            Text(
+                                folderDisplayName(folder, allFolders),
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        }
                     }
                 }
             }
