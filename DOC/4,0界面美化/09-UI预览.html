@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AnythingLLM 批量导入 · UI 优化预览(v1.1)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #F0F3F7; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; color: #1A202C; padding: 24px; }
+  .page-head { max-width: 1180px; margin: 0 auto 20px; }
+  .page-head h1 { font-size: 22px; color: #1A365D; }
+  .page-head p { font-size: 13px; color: #5F6670; margin-top: 6px; line-height: 1.6; }
+  .grid { display: flex; flex-wrap: wrap; gap: 22px; justify-content: center; max-width: 1180px; margin: 0 auto; }
+  .screen-wrap { width: 330px; }
+  .screen-cap { margin-top: 8px; text-align: center; }
+  .screen-cap .t { font-size: 14px; font-weight: 700; color: #1A202C; }
+  .screen-cap .s { font-size: 12px; color: #5F6670; margin-top: 2px; line-height: 1.5; }
+  .phone { width: 330px; background: #FFFFFF; border-radius: 34px; border: 7px solid #2D3748; overflow: hidden; box-shadow: 0 10px 24px rgba(45,55,72,.18); }
+  .statusbar { display: flex; justify-content: space-between; align-items: center; padding: 8px 18px 4px; font-size: 11px; font-weight: 600; color: #1A202C; background: #FFFFFF; }
+  .screen { background: #F7FAFC; min-height: 560px; padding: 8px 12px 12px; }
+  .nav { display: flex; background: #FFFFFF; border-top: 1px solid #E2E8F0; padding: 6px 0 4px; }
+  .nav div { flex: 1; text-align: center; font-size: 10px; color: #718096; padding-top: 2px; }
+  .nav div.on { color: #2B6CB0; font-weight: 600; }
+  .bar { font-size: 12px; color: #FFFFFF; background: #EBF8FF; color: #2B6CB0; border-radius: 20px; padding: 4px 10px; display: inline-block; font-weight: 600; }
+  .chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; padding: 4px 10px; border-radius: 999px; font-weight: 600; }
+  .btn { border-radius: 10px; font-size: 13px; font-weight: 600; text-align: center; padding: 10px 0; }
+  .card { background: #FFFFFF; border-radius: 12px; padding: 10px 12px; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+  svg { display: block; }
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <h1>AnythingLLM 批量导入 · APP 各层级 UI 预览(基于 09-UI优化方案 v1.1)</h1>
+  <p>示意结构,非最终实现。色板:主色 #2B6CB0 / 成功绿 / 错误红 / 同步模式灰;含 P0–P2 主要优化点(目标气泡拖拽、分区化知识库、状态图标化、连接状态条、悬浮气泡等)。每屏编号对应方案章节。</p>
+</div>
+
+<div class="grid">
+
+<!-- ============ 屏1 收集箱 ============ -->
+<div class="screen-wrap">
+  <div class="phone">
+    <div class="statusbar"><span>09:41</span><span style="letter-spacing:1px;">●●● ▲ ▮▮</span></div>
+    <div class="screen">
+      <div style="font-size:11px;color:#2B6CB0;background:#EBF8FF;border-radius:999px;padding:3px 10px;display:inline-block;font-weight:600;">● 已连接 · 7 个工作区 · 快照 09:12</div>
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:10px;">
+        <div style="font-size:19px;font-weight:700;">收集箱</div>
+        <div style="font-size:11px;color:#2B6CB0;font-weight:600;">全选 · 刷新</div>
+      </div>
+      <div style="font-size:11px;color:#5F6670;margin-top:2px;">待整理 3 条 · 勾选后可批量操作</div>
+      <div style="font-size:12px;font-weight:700;color:#2B6CB0;margin:12px 0 6px;">今天 · 9月11日</div>
+      <!-- 条目1 -->
+      <div style="background:#FFFFFF;border-radius:12px;padding:9px 10px;display:flex;align-items:center;gap:8px;box-shadow:0 1px 2px rgba(0,0,0,.06);margin-bottom:6px;">
+        <div style="width:34px;height:34px;border-radius:10px;background:#EBF8FF;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2B6CB0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9l-6-6z"/><path d="M14 3v6h6"/></svg></div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">需求文档_v2.pdf</div>
+          <div style="font-size:10px;color:#5F6670;margin-top:1px;">文件 · 分享 · 1.2MB</div>
+        </div>
+        <div style="font-size:10px;color:#5F6670;background:#EDF2F7;border-radius:999px;padding:2px 8px;font-weight:600;flex-shrink:0;">待整理</div>
+      </div>
+      <!-- 条目2 链接 -->
+      <div style="background:#FFFFFF;border-radius:12px;padding:9px 10px;display:flex;align-items:center;gap:8px;box-shadow:0 1px 2px rgba(0,0,0,.06);margin-bottom:6px;">
+        <div style="width:34px;height:34px;border-radius:10px;background:#E6FFFA;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2C7A7B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a5 5 0 007.07 0l3-3a5 5 0 00-7.07-7.07l-1.5 1.5"/><path d="M14 10a5 5 0 00-7.07 0l-3 3a5 5 0 007.07 7.07l1.5-1.5"/></svg></div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">example.com/docs/a?x=1</div>
+          <div style="font-size:10px;color:#5F6670;margin-top:1px;">链接 · 分享链接 · 待服务器抓取</div>
+        </div>
+        <div style="font-size:10px;color:#5F6670;background:#EDF2F7;border-radius:999px;padding:2px 8px;font-weight:600;flex-shrink:0;">待整理</div>
+      </div>
+      <!-- 条目3 -->
+      <div style="background:#FFFFFF;border-radius:12px;padding:9px 10px;display:flex;align-items:center;gap:8px;box-shadow:0 1px 2px rgba(0,0,0,.06);margin-bottom:6px;">
+        <div style="width:34px;height:34px;border-radius:10px;background:#EBF8FF;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2B6CB0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9l-6-6z"/><path d="M14 3v6h6"/></svg></div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">会议纪要.docx</div>
+          <div style="font-size:10px;color:#5F6670;margin-top:1px;">文件 · SAF · 86KB</div>
+        </div>
+        <div style="font-size:10px;color:#5F6670;background:#EDF2F7;border-radius:999px;padding:2px 8px;font-weight:600;flex-shrink:0;">待整理</div>
+      </div>
+      <!-- 目标气泡面板 -->
+      <div style="background:#FFFFFF;border-radius:12px;padding:8px 10px;box-shadow:0 1px 2px rgba(0,0,0,.06);margin-top:10px;">
+        <div style="font-size:10px;color:#5F6670;font-weight:600;margin-bottom:6px;">标记目标(长按条目拖到气泡 / 勾选后点气泡批量标记)</div>
+        <div style="display:flex;gap:6px;overflow:hidden;">
+          <div style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#2B6CB0;background:#EBF8FF;border-radius:999px;padding:5px 10px;border:1.5px solid #2B6CB0;flex-shrink:0;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2B6CB0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>custom-documents</div>
+          <div style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#2C7A7B;background:#E6FFFA;border-radius:999px;padding:5px 10px;flex-shrink:0;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2C7A7B" stroke-width="2"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg>wsl</div>
+          <div style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#2C7A7B;background:#E6FFFA;border-radius:999px;padding:5px 10px;flex-shrink:0;">知识库</div>
+          <div style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#4A5568;background:#EDF2F7;border-radius:999px;padding:5px 10px;flex-shrink:0;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4A5568" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 11-2.64-6.36M21 3v6h-6"/></svg>同步模式</div>
+          <div style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:999px;background:#FFFFFF;border:1.5px dashed #A0AEC0;color:#A0AEC0;font-size:14px;flex-shrink:0;">+</div>
+        </div>
+      </div>
+    </div>
+    <div class="nav"><div class="on">● 收集箱</div><div>知识库</div></div>
+  </div>
+  <div class="screen-cap"><div class="t">① 收集箱 · 优化后</div><div class="s">连接状态条(UI-20)· 条目卡片四级信息(UI-16)· 目标气泡面板(§4.4)</div></div>
+</div>
+
+<!-- ============ 屏2 收集箱·拖拽中 ============ -->
+<div class="screen-wrap">
+  <div class="phone">
+    <div class="statusbar"><span>09:41</span><span style="letter-spacing:1px;">●●● ▲ ▮▮</span></div>
+    <div class="screen">
+      <div style="font-size:11px;color:#2B6CB0;background:#EBF8FF;border-radius:999px;padding:3px 10px;display:inline-block;font-weight:600;">● 已连接 · 7 个工作区 · 快照 09:12</div>
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:10px;">
+        <div style="font-size:19px;font-weight:700;">收集箱</div>
+        <div style="font-size:11px;color:#2B6CB0;font-weight:600;">全选 · 刷新</div>
+      </div>
+      <div style="font-size:12px;font-weight:700;color:#2B6CB0;margin:12px 0 6px;">今天 · 9月11日</div>
+      <!-- 拖拽中的条目：浮起 -->
+      <div style="background:#FFFFFF;border-radius:12px;padding:9px 10px;display:flex;align-items:center;gap:8px;box-shadow:0 10px 18px rgba(43,108,176,.28);margin-bottom:6px;border:2px solid #2B6CB0;transform:translate(-6px,-6px) scale(1.04);position:relative;z-index:2;">
+        <div style="width:34px;height:34px;border-radius:10px;background:#EBF8FF;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2B6CB0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9l-6-6z"/><path d="M14 3v6h6"/></svg></div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:700;color:#2B6CB0;">需求文档_v2.pdf</div>
+          <div style="font-size:10px;color:#5F6670;margin-top:1px;">拖动中…</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:#2B6CB0;font-weight:700;text-align:center;margin:2px 0 6px;">↓ 松手标记到 custom-documents</div>
+      <!-- 虚线拖拽线 -->
+      <div style="border-left:2px dashed #2B6CB0;height:26px;margin-left:60px;opacity:.6;"></div>
+      <div style="font-size:11px;color:#5F6670;margin:4px 0 6px;">— 其他条目(未选中,可继续滚动)—</div>
+      <!-- 目标气泡面板：custom-documents 高亮放大 -->
+      <div style="background:#FFFFFF;border-radius:12px;padding:8px 10px;box-shadow:0 1px 2px rgba(0,0,0,.06);margin-top:8px;">
+        <div style="font-size:10px;color:#5F6670;font-weight:600;margin-bottom:6px;">标记目标(经过时气泡放大高亮)</div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <div style="display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;color:#FFFFFF;background:#2B6CB0;border-radius:999px;padding:8px 14px;box-shadow:0 4px 10px rgba(43,108,176,.4);transform:scale(1.12);flex-shrink:0;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>custom-documents</div>
+          <div style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#2C7A7B;background:#E6FFFA;border-radius:999px;padding:5px 10px;flex-shrink:0;">wsl</div>
+          <div style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#4A5568;background:#EDF2F7;border-radius:999px;padding:5px 10px;flex-shrink:0;">同步模式</div>
+          <div style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:999px;background:#FFFFFF;border:1.5px dashed #A0AEC0;color:#A0AEC0;font-size:14px;flex-shrink:0;">+</div>
+        </div>
+      </div>
+      <div style="font-size:10px;color:#5F6670;margin-top:8px;">松手:震动反馈 + 气泡脉冲 → 条目移入知识库"已标记";空白处松手回弹取消</div>
+    </div>
+    <div class="nav"><div class="on">● 收集箱</div><div>知识库</div></div>
+  </div>
+  <div class="screen-cap"><div class="t">② 收集箱 · 拖拽标记中</div><div class="s">长按条目浮起(§4.4 第2步)· 目标气泡放大高亮 · 松手=标记(震动反馈)</div></div>
+</div>
+
+<!-- ============ 屏3 知识库 ============ -->
+<div class="screen-wrap">
+  <div class="phone">
+    <div class="statusbar"><span>09:41</span><span style="letter-spacing:1px;">●●● ▲ ▮▮</span></div>
+    <div class="screen">
+      <div style="font-size:11px;color:#2B6CB0;background:#EBF8FF;border-radius:999px;padding:3px 10px;display:inline-block;font-weight:600;">● 已连接 · 7 个工作区 · 快照 09:12</div>
+      <div style="font-size:19px;font-weight:700;margin-top:10px;">知识库</div>
+      <!-- 同步区 -->
+      <div style="background:#2B6CB0;color:#FFFFFF;border-radius:12px;padding:12px;text-align:center;font-size:14px;font-weight:700;margin-top:10px;">连接服务器并同步嵌入</div>
+      <div style="font-size:10px;color:#5F6670;margin-top:4px;">快照时间: 2026-09-11 09:12 · 比对后执行已标记计划</div>
+      <!-- 比对结果 -->
+      <div style="background:#FFFFFF;border-radius:12px;padding:8px 10px;box-shadow:0 1px 2px rgba(0,0,0,.06);margin-top:8px;display:flex;gap:14px;">
+        <div style="font-size:11px;color:#276749;font-weight:600;">+ 新增: 文件夹 2026资料 / 工作区 archive</div>
+      </div>
+      <!-- 分区A 结构 -->
+      <div style="font-size:13px;font-weight:700;margin:14px 0 6px;">知识库结构(快照)</div>
+      <div style="background:#FFFFFF;border-radius:12px;padding:10px 12px;box-shadow:0 1px 2px rgba(0,0,0,.06);">
+        <div style="font-size:11px;font-weight:700;color:#2B6CB0;">文档文件夹(5)</div>
+        <div style="font-size:11px;color:#4A5568;margin-top:3px;">custom-documents · 工作资料 · 个人笔记 · 项目归档 · 2026资料</div>
+        <div style="height:1px;background:#EDF2F7;margin:8px 0;"></div>
+        <div style="font-size:11px;font-weight:700;color:#2C7A7B;">工作区(7)</div>
+        <div style="font-size:11px;color:#4A5568;margin-top:3px;">wsl · 知识库 · archive · 测试 · dev · 个人 · 团队</div>
+      </div>
+      <!-- 分区B 已标记 -->
+      <div style="font-size:13px;font-weight:700;margin:14px 0 6px;">已标记待执行(2)</div>
+      <div style="background:#FFFFFF;border-radius:12px;padding:9px 10px;box-shadow:0 1px 2px rgba(0,0,0,.06);margin-bottom:6px;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div style="font-size:12px;font-weight:600;flex:1;">需求文档_v2.pdf</div><div style="font-size:10px;color:#5F6670;">文件</div>
+        </div>
+        <div style="font-size:11px;color:#2B6CB0;font-weight:600;margin-top:2px;">→ custom-documents / 嵌入 wsl</div>
+        <div style="font-size:10px;color:#2B6CB0;margin-top:4px;">取消标记 · 删除</div>
+      </div>
+      <div style="background:#FFFFFF;border-radius:12px;padding:9px 10px;box-shadow:0 1px 2px rgba(0,0,0,.06);">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div style="font-size:12px;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">url-openai.com/research</div><div style="font-size:10px;color:#5F6670;">链接</div>
+        </div>
+        <div style="font-size:11px;color:#2C7A7B;font-weight:600;margin-top:2px;">→ custom-documents / 同步模式(不嵌入)</div>
+        <div style="font-size:10px;color:#C53030;margin-top:3px;">⚠ 目标工作区已删除,请取消后重新标记</div>
+        <div style="font-size:10px;color:#C53030;margin-top:3px;">取消标记 · 删除</div>
+      </div>
+      <!-- 底部入口 -->
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <div style="flex:1;border:1px solid #CBD5E0;border-radius:10px;text-align:center;font-size:12px;font-weight:600;color:#2D3748;padding:8px 0;">服务器设置</div>
+        <div style="flex:1;border:1px solid #CBD5E0;border-radius:10px;text-align:center;font-size:12px;font-weight:600;color:#2D3748;padding:8px 0;">查看日志</div>
+      </div>
+    </div>
+    <div class="nav"><div>收集箱</div><div class="on">● 知识库</div></div>
+  </div>
+  <div class="screen-cap"><div class="t">③ 知识库 · 分区化(优化后)</div><div class="s">同步区/比对 diff(UI-21/22)· 结构快照 · 已标记计划(失效红色提示)· LazyColumn 分区(UI-15)</div></div>
+</div>
+
+<!-- ============ 屏4 知识库·同步中 ============ -->
+<div class="screen-wrap">
+  <div class="phone">
+    <div class="statusbar"><span>09:42</span><span style="letter-spacing:1px;">●●● ▲ ▮▮</span></div>
+    <div class="screen" style="position:relative;">
+      <div style="font-size:11px;color:#2B6CB0;background:#EBF8FF;border-radius:999px;padding:3px 10px;display:inline-block;font-weight:600;">● 已连接 · 同步执行中</div>
+      <div style="font-size:19px;font-weight:700;margin-top:10px;">知识库</div>
+      <!-- 阶段化按钮 -->
+      <div style="background:#2B6CB0;color:#FFFFFF;border-radius:12px;padding:12px;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round"><path d="M12 3a9 9 0 100 18 9 9 0 000-18z"/><path d="M12 7v5l3 3"/></svg>
+        <span style="font-size:14px;font-weight:700;">同步中 3/5</span>
+      </div>
+      <!-- 进度卡 -->
+      <div style="background:#EBF8FF;border-radius:12px;padding:10px 12px;margin-top:10px;">
+        <div style="font-size:12px;font-weight:700;color:#2B6CB0;">同步进度 3/5 · 完成</div>
+        <div style="font-size:11px;color:#4A5568;margin-top:2px;">成功 2 · 跳过 0 · 失败 1</div>
+        <div style="height:6px;background:#FFFFFF;border-radius:999px;margin-top:8px;overflow:hidden;"><div style="width:66%;height:100%;background:#2B6CB0;border-radius:999px;"></div></div>
+        <div style="font-size:11px;color:#276749;margin-top:8px;"><b>✓</b> 需求文档_v2.pdf — 上传+嵌入完成</div>
+        <div style="font-size:11px;color:#276749;margin-top:2px;"><b>✓</b> url-openai.com — 服务器抓取完成</div>
+        <div style="font-size:11px;color:#C53030;margin-top:2px;"><b>✗</b> 会议纪要.docx — 上传超时,自动重试中</div>
+      </div>
+      <div style="font-size:11px;color:#5F6670;margin-top:10px;">前台服务运行中:退出 app 或锁屏不中断,通知栏可查看进度与取消(FR-24)</div>
+      <!-- 悬浮气泡 -->
+      <div style="position:absolute;right:8px;bottom:10px;background:#2B6CB0;color:#FFFFFF;border-radius:999px;padding:10px 14px;font-size:12px;font-weight:700;box-shadow:0 6px 16px rgba(43,108,176,.45);display:flex;align-items:center;gap:6px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round"><path d="M21 12a9 9 0 11-2.64-6.36M21 3v6h-6"/></svg>同步 3/5
+      </div>
+    </div>
+    <div class="nav"><div>收集箱</div><div class="on">● 知识库</div></div>
+  </div>
+  <div class="screen-cap"><div class="t">④ 知识库 · 同步执行中</div><div class="s">阶段化按钮(UI-21)· 进度卡+逐项状态(图标化)· 右下角悬浮气泡(§4.4 第4点)</div></div>
+</div>
+
+<!-- ============ 屏5 服务器设置 ============ -->
+<div class="screen-wrap">
+  <div class="phone">
+    <div class="statusbar"><span>09:45</span><span style="letter-spacing:1px;">●●● ▲ ▮▮</span></div>
+    <div class="screen">
+      <div style="display:flex;align-items:center;gap:6px;padding-bottom:8px;border-bottom:1px solid #EDF2F7;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2D3748" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+        <div style="font-size:16px;font-weight:700;">服务器设置</div>
+      </div>
+      <div style="font-size:11px;font-weight:600;color:#4A5568;margin:12px 0 4px;">服务器地址 (baseUrl)</div>
+      <div style="border:1.5px solid #2B6CB0;border-radius:10px;padding:10px 12px;font-size:13px;color:#1A202C;">http://192.168.1.5:3001</div>
+      <div style="font-size:10px;color:#5F6670;margin-top:4px;">模拟器用 10.0.2.2 访问宿主机;真机填局域网 IP</div>
+      <div style="font-size:11px;font-weight:600;color:#4A5568;margin:12px 0 4px;">API Key</div>
+      <div style="border:1.5px solid #CBD5E0;border-radius:10px;padding:10px 12px;font-size:13px;color:#1A202C;display:flex;justify-content:space-between;">••••••••••••••••••• <span style="color:#2B6CB0;font-size:11px;font-weight:600;">显示</span></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:12px;">
+        <div style="border:1.5px solid #2B6CB0;color:#2B6CB0;border-radius:10px;font-size:13px;font-weight:600;padding:9px 18px;">测试连接</div>
+        <div style="font-size:11px;color:#276749;background:#C6F6D5;border-radius:999px;padding:4px 10px;font-weight:600;">✓ 连接正常 · 7 个工作区</div>
+      </div>
+      <!-- 高级参数 -->
+      <div style="background:#FFFFFF;border-radius:12px;padding:10px 12px;box-shadow:0 1px 2px rgba(0,0,0,.06);margin-top:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div style="font-size:13px;font-weight:700;">高级参数</div><div style="font-size:12px;color:#718096;">▾</div>
+        </div>
+        <div style="font-size:10px;font-weight:700;color:#5F6670;margin-top:8px;">超时(秒)</div>
+        <div style="display:flex;gap:6px;margin-top:4px;">
+          <div style="flex:1;border:1px solid #CBD5E0;border-radius:8px;text-align:center;font-size:11px;padding:7px 0;">探活 5</div>
+          <div style="flex:1;border:1px solid #CBD5E0;border-radius:8px;text-align:center;font-size:11px;padding:7px 0;">API 60</div>
+          <div style="flex:1;border:1px solid #CBD5E0;border-radius:8px;text-align:center;font-size:11px;padding:7px 0;">上传 300</div>
+        </div>
+        <div style="font-size:10px;font-weight:700;color:#5F6670;margin-top:8px;">文件名与重复</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;border:1px solid #CBD5E0;border-radius:8px;padding:7px 10px;font-size:11px;margin-top:4px;">文件名策略 <span style="color:#2B6CB0;font-weight:600;">unicode (中文转 uXXXX) ▾</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:11px;">重复检测 <span style="width:30px;height:16px;background:#2B6CB0;border-radius:999px;display:inline-flex;align-items:center;justify-content:flex-end;padding:2px;"><span style="width:12px;height:12px;background:#FFF;border-radius:999px;display:inline-block;"></span></span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:11px;">主题模式 <span style="color:#2B6CB0;font-weight:600;">跟随系统 ▾</span></div>
+      </div>
+      <div style="background:#2B6CB0;color:#FFFFFF;border-radius:12px;text-align:center;font-size:14px;font-weight:700;padding:12px 0;margin-top:14px;">保存并返回</div>
+    </div>
+  </div>
+  <div class="screen-cap"><div class="t">⑤ 服务器设置</div><div class="s">标准返回箭头(UI-04)· 连接徽标(图标化状态)· 高级参数折叠(完整设计系统)</div></div>
+</div>
+
+<!-- ============ 屏6 预校验结果 ============ -->
+<div class="screen-wrap">
+  <div class="phone">
+    <div class="statusbar"><span>09:47</span><span style="letter-spacing:1px;">●●● ▲ ▮▮</span></div>
+    <div class="screen">
+      <div style="display:flex;align-items:center;gap:6px;padding-bottom:8px;border-bottom:1px solid #EDF2F7;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2D3748" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+        <div style="font-size:16px;font-weight:700;">预校验结果</div>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:8px;margin-top:12px;">
+        <div style="font-size:14px;font-weight:700;">通过 3 个 · 2.1MB</div>
+        <div style="font-size:12px;color:#C53030;font-weight:600;">拒绝 1 个</div>
+      </div>
+      <div style="font-size:12px;font-weight:700;color:#276749;margin:12px 0 6px;">通过</div>
+      <div style="background:#F0FFF4;border-radius:12px;padding:9px 10px;display:flex;align-items:center;gap:8px;margin-bottom:6px;border:1px solid #C6F6D5;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#276749" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>
+        <div style="flex:1;"><div style="font-size:12px;font-weight:600;">需求文档_v2.pdf</div><div style="font-size:10px;color:#5F6670;">存储名: u9700u6c42v2.txt</div></div>
+        <div style="font-size:10px;color:#5F6670;">1.2MB</div>
+      </div>
+      <div style="background:#F0FFF4;border-radius:12px;padding:9px 10px;display:flex;align-items:center;gap:8px;margin-bottom:6px;border:1px solid #C6F6D5;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#276749" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>
+        <div style="flex:1;"><div style="font-size:12px;font-weight:600;">会议纪要.docx</div><div style="font-size:10px;color:#5F6670;">存储名: 会议纪要.docx</div></div>
+        <div style="font-size:10px;color:#5F6670;">86KB</div>
+      </div>
+      <div style="background:#F0FFF4;border-radius:12px;padding:9px 10px;display:flex;align-items:center;gap:8px;margin-bottom:6px;border:1px solid #C6F6D5;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#276749" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>
+        <div style="flex:1;"><div style="font-size:12px;font-weight:600;">example.com/docs/a(链接)</div><div style="font-size:10px;color:#5F6670;">由服务器抓取,无需本地上传</div></div>
+        <div style="font-size:10px;color:#5F6670;">—</div>
+      </div>
+      <div style="font-size:12px;font-weight:700;color:#C53030;margin:12px 0 6px;">拒绝</div>
+      <div style="background:#FFF5F5;border-radius:12px;padding:9px 10px;border:1px solid #FED7D7;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C53030" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          <div style="font-size:12px;font-weight:600;">installer.iso</div>
+        </div>
+        <div style="font-size:10px;color:#C53030;margin:4px 0 0 24px;">· 扩展名不在白名单 · 超过单文件上限 100MB</div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px;">
+        <div style="flex:1;border:1px solid #CBD5E0;border-radius:10px;text-align:center;font-size:12px;font-weight:600;color:#2D3748;padding:10px 0;">重新选择</div>
+        <div style="flex:1;background:#2B6CB0;color:#FFFFFF;border-radius:10px;text-align:center;font-size:12px;font-weight:700;padding:10px 0;">下一步:选择目标</div>
+      </div>
+    </div>
+  </div>
+  <div class="screen-cap"><div class="t">⑥ 预校验结果</div><div class="s">通过/拒绝分区+图标化状态(UI-11)· 拒绝原因逐条(链接条目提示服务器抓取)</div></div>
+</div>
+
+<!-- ============ 屏7 导入进度 ============ -->
+<div class="screen-wrap">
+  <div class="phone">
+    <div class="statusbar"><span>09:50</span><span style="letter-spacing:1px;">●●● ▲ ▮▮</span></div>
+    <div class="screen">
+      <div style="display:flex;align-items:center;gap:6px;padding-bottom:8px;border-bottom:1px solid #EDF2F7;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2D3748" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+        <div style="font-size:16px;font-weight:700;">导入进度</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:12px;">
+        <div style="font-size:13px;font-weight:700;">共 3 · 成功 1 · 失败 0 · 跳过 0</div>
+        <div style="font-size:11px;color:#2B6CB0;font-weight:600;">进行中</div>
+      </div>
+      <div style="height:7px;background:#EDF2F7;border-radius:999px;margin-top:8px;overflow:hidden;"><div style="width:66%;height:100%;background:#2B6CB0;border-radius:999px;"></div></div>
+      <!-- 卡1 上传中 -->
+      <div style="background:#FFFFFF;border-radius:12px;padding:10px 12px;box-shadow:0 1px 2px rgba(0,0,0,.06);margin-top:10px;">
+        <div style="display:flex;align-items:center;gap:6px;"><div style="font-size:12px;font-weight:600;flex:1;">需求文档_v2.pdf</div><div style="font-size:10px;color:#2B6CB0;font-weight:600;">上传中</div></div>
+        <div style="font-size:10px;color:#5F6670;margin-top:2px;">存储名: u9700u6c42v2.txt</div>
+        <div style="height:6px;background:#EDF2F7;border-radius:999px;margin-top:8px;overflow:hidden;"><div style="width:45%;height:100%;background:#2B6CB0;border-radius:999px;"></div></div>
+        <div style="font-size:10px;color:#5F6670;margin-top:3px;">540KB / 1.2MB</div>
+      </div>
+      <!-- 卡2 成功 -->
+      <div style="background:#F0FFF4;border-radius:12px;padding:10px 12px;border:1px solid #C6F6D5;margin-top:8px;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#276749" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>
+          <div style="font-size:12px;font-weight:600;flex:1;">会议纪要.docx</div><div style="font-size:10px;color:#276749;font-weight:600;">成功</div>
+        </div>
+        <div style="font-size:10px;color:#5F6670;margin-top:2px;">嵌入验证通过 · docpath 匹配</div>
+      </div>
+      <!-- 卡3 等待 -->
+      <div style="background:#FFFFFF;border-radius:12px;padding:10px 12px;box-shadow:0 1px 2px rgba(0,0,0,.06);margin-top:8px;">
+        <div style="display:flex;align-items:center;gap:6px;"><div style="font-size:12px;font-weight:600;flex:1;">旧报告.pdf</div><div style="font-size:10px;color:#5F6670;">等待中</div></div>
+        <div style="font-size:10px;color:#5F6670;margin-top:2px;">存储名: 旧报告.pdf</div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px;">
+        <div style="flex:1;border:1px solid #CBD5E0;border-radius:10px;text-align:center;font-size:12px;font-weight:600;color:#2D3748;padding:10px 0;">暂停</div>
+        <div style="flex:1;border:1px solid #CBD5E0;border-radius:10px;text-align:center;font-size:12px;font-weight:600;color:#C53030;padding:10px 0;">取消</div>
+      </div>
+    </div>
+  </div>
+  <div class="screen-cap"><div class="t">⑦ 导入进度</div><div class="s">总进度+逐文件状态图标化(UI-11)· 上传进度条/验证阶段文本(现状已具备,统一视觉)</div></div>
+</div>
+
+</div>
+
+<div class="page-head" style="margin-top:26px;">
+  <p style="font-size:12px;color:#718096;">示意结构:各屏为优化后目标态的视觉预览,标注的方案编号见 DOC/2.0需求回归/09-UI优化方案.md;未覆盖页面(选择文件/日志/导入目标)沿用同设计系统即可。颜色为设计方案色板,非最终像素级定义。</p>
+</div>
+
+</body>
+</html>

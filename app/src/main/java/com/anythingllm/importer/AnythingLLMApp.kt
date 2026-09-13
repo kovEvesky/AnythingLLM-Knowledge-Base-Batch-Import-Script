@@ -5,6 +5,7 @@ import com.anythingllm.importer.data.api.AnythingLlmClientFactory
 import com.anythingllm.importer.data.collect.CollectRepository
 import com.anythingllm.importer.data.collect.SnapshotRepository
 import com.anythingllm.importer.data.config.ConfigRepository
+import com.anythingllm.importer.data.library.LibraryRepository
 import com.anythingllm.importer.data.log.ImportLogRepository
 import com.anythingllm.importer.domain.probe.ConnectionProbe
 import java.io.File
@@ -35,6 +36,10 @@ class AnythingLLMApp : Application() {
     lateinit var snapshotRepository: SnapshotRepository
         private set
 
+    /** v1.3 资料库仓储(FR-30/31):library 目录位于应用私有 filesDir(文件夹树 + 条目 + 文件副本) */
+    lateinit var libraryRepository: LibraryRepository
+        private set
+
     override fun onCreate() {
         super.onCreate()
         configRepository = ConfigRepository(this)
@@ -49,6 +54,9 @@ class AnythingLLMApp : Application() {
         )
         snapshotRepository = SnapshotRepository(
             file = File(filesDir, "snapshot.json"),
+        )
+        libraryRepository = LibraryRepository(
+            libraryDir = File(filesDir, "library"),
         )
     }
 }

@@ -62,6 +62,12 @@ class ConfigRepository(private val context: Context) {
         val ASK_FOR_CHAT_TEST = booleanPreferencesKey("ask_for_chat_test")
         val LOG_RETENTION_DAYS = intPreferencesKey("log_retention_days")
         val THEME_MODE = stringPreferencesKey("theme_mode")
+        // v1.3 FTP 同步(FR-32)
+        val FTP_HOST = stringPreferencesKey("ftp_host")
+        val FTP_PORT = intPreferencesKey("ftp_port")
+        val FTP_USER = stringPreferencesKey("ftp_user")
+        val FTP_PASSWORD = stringPreferencesKey("ftp_password")
+        val FTP_REMOTE_ROOT = stringPreferencesKey("ftp_remote_root")
     }
 
     /** 配置流:每次 DataStore 变更/Key 解密后发射新值 */
@@ -96,6 +102,13 @@ class ConfigRepository(private val context: Context) {
             themeMode = runCatching {
                 ThemeMode.valueOf(prefs[Keys.THEME_MODE] ?: "")
             }.getOrDefault(ThemeMode.SYSTEM),
+            ftp = FtpConfig(
+                host = prefs[Keys.FTP_HOST] ?: "",
+                port = prefs[Keys.FTP_PORT] ?: 2121,
+                username = prefs[Keys.FTP_USER] ?: "sync",
+                password = prefs[Keys.FTP_PASSWORD] ?: "sync123",
+                remoteRoot = prefs[Keys.FTP_REMOTE_ROOT] ?: "Library",
+            ),
         )
     }
 
@@ -130,6 +143,11 @@ class ConfigRepository(private val context: Context) {
             prefs[Keys.ASK_FOR_CHAT_TEST] = config.askForChatTest
             prefs[Keys.LOG_RETENTION_DAYS] = config.logRetentionDays
             prefs[Keys.THEME_MODE] = config.themeMode.name
+            prefs[Keys.FTP_HOST] = config.ftp.host
+            prefs[Keys.FTP_PORT] = config.ftp.port
+            prefs[Keys.FTP_USER] = config.ftp.username
+            prefs[Keys.FTP_PASSWORD] = config.ftp.password
+            prefs[Keys.FTP_REMOTE_ROOT] = config.ftp.remoteRoot
         }
     }
 

@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.LibraryBooks
 import androidx.compose.material.icons.filled.CreateNewFolder
+import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
@@ -38,8 +39,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 /**
- * 双主页(v1.2 FR-23):
- * 底部导航 Tab1「收集箱」(待整理条目) / Tab2「知识库」(结构清单 + 已标记计划 + 同步入口)。
+ * 三主页(v1.2 FR-23 + v1.3):
+ * 底部导航 Tab1「收集箱」(待整理条目)/ Tab2「知识库」(结构清单 + 已标记计划 + 同步入口)/
+ * Tab3「资料库」(v1.3:文件夹树 + 条目管理 + FTP 同步到 PC,未安装 AnythingLLM 场景)。
  * v1.0 服务器状态/导入/设置/日志入口收拢到对应 Tab(即时导入保留为收集箱内快捷入口)。
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -68,7 +70,7 @@ fun HomeScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text(if (tab == 0) "收集箱" else "知识库") })
+            TopAppBar(title = { Text(if (tab == 0) "收集箱" else if (tab == 1) "知识库" else "资料库") })
         },
         bottomBar = {
             NavigationBar {
@@ -83,6 +85,12 @@ fun HomeScreen(
                     onClick = { tab = 1 },
                     icon = { Icon(Icons.AutoMirrored.Filled.LibraryBooks, contentDescription = null) },
                     label = { Text("知识库") },
+                )
+                NavigationBarItem(
+                    selected = tab == 2,
+                    onClick = { tab = 2 },
+                    icon = { Icon(Icons.Filled.Folder, contentDescription = null) },
+                    label = { Text("资料库") },
                 )
             }
         },
@@ -107,6 +115,7 @@ fun HomeScreen(
                     onToggleSelectAll = viewModel::toggleSelectAll,
                     onMark = viewModel::markSelected,
                     onDeleteSelected = viewModel::deleteSelected,
+                    onArchiveToLibrary = viewModel::archiveSelectedToLibrary,
                     onRefresh = viewModel::refresh,
                 )
             }
@@ -117,6 +126,20 @@ fun HomeScreen(
                 onDeleteEntry = viewModel::deleteEntry,
                 onOpenSettings = onOpenSettings,
                 onOpenLogs = onOpenLogs,
+                modifier = Modifier.padding(padding),
+            )
+            2 -> LibraryScreen(
+                state = state,
+                onEnterFolder = viewModel::libraryEnterFolder,
+                onGoUp = viewModel::libraryGoUp,
+                onGoRoot = viewModel::libraryGoRoot,
+                onCreateFolder = viewModel::libraryCreateFolder,
+                onRenameFolder = viewModel::libraryRenameFolder,
+                onDeleteFolder = viewModel::libraryDeleteFolder,
+                onMoveEntry = viewModel::libraryMoveEntry,
+                onDeleteEntry = viewModel::libraryDeleteEntry,
+                onSyncFtp = viewModel::syncFtpNow,
+                onOpenSettings = onOpenSettings,
                 modifier = Modifier.padding(padding),
             )
         }

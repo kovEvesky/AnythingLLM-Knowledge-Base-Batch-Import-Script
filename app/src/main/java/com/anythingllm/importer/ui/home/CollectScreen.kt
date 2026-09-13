@@ -1,5 +1,6 @@
 package com.anythingllm.importer.ui.home
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -35,9 +36,9 @@ import com.anythingllm.importer.data.collect.EntryType
 import com.anythingllm.importer.util.formatBytes
 
 /**
- * Tab1 收集箱(v1.2 FR-18/22/23):
- * 待整理条目(文件+链接)按收集日分组;勾选批量操作 → 标记(文件夹+工作区)或删除;
- * 标记后条目移出本页(进入 Tab2 已标记计划区)。
+ * Tab1 收集箱(v1.2 FR-18/22/23 + v1.3 归档):
+ * 待整理条目(文件+链接)按收集日分组;勾选批量操作 → 标记(文件夹+工作区)、归入资料库 或 删除;
+ * 标记后条目移出本页(进入 Tab2 已标记计划区);归入资料库后进入 Tab3(移动语义)。
  */
 @Composable
 fun CollectScreen(
@@ -46,9 +47,11 @@ fun CollectScreen(
     onToggleSelectAll: () -> Unit,
     onMark: (folder: String, workspace: String?) -> Unit,
     onDeleteSelected: () -> Unit,
+    onArchiveToLibrary: (String?) -> Unit,
     onRefresh: () -> Unit,
 ) {
     var showMarkDialog by remember { mutableStateOf(false) }
+    var showArchiveDialog by remember { mutableStateOf(false) }
 
     Column(Modifier.fillMaxSize().padding(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -97,11 +100,25 @@ fun CollectScreen(
                 Button(onClick = { showMarkDialog = true }, modifier = Modifier.weight(1f)) {
                     Text("标记所选(${state.selectedIds.size})")
                 }
+                Button(onClick = { showArchiveDialog = true }, modifier = Modifier.weight(1f)) {
+                    Text("归入资料库")
+                }
                 OutlinedButton(onClick = onDeleteSelected, modifier = Modifier.weight(1f)) {
                     Text("删除所选")
                 }
             }
         }
+    }
+
+    if (showArchiveDialog) {
+        ArchiveDialog(
+            folders = state.libraryAllFolders,
+            onDismiss = { showArchiveDialog = false },
+            onConfirm = { folderId ->
+                onArchiveToLibrary(folderId)
+                showArchiveDialog = false
+            },
+        )
     }
 
     if (showMarkDialog) {
@@ -213,4 +230,69 @@ private fun MarkDialog(
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } },
     )
+}
+
+/** v1.3 归档目标选择:收集箱勾选条目 → 资料库文件夹(或根目录) */
+@Composable
+private fun ArchiveDialog(
+    folders: List<com.anythingllm.importer.data.library.LibraryFolder>,
+    onDismiss: () -> Unit,
+    onConfirm: (String?) -> Unit,
+) {
+    var target by remember { mutableStateOf<String?>(null) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("归入资料库") },
+        text = {
+            Column {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth().clickable { target = null },
+                ) {
+                    RadioButton(selected = target == null, onClick = { target = null })
+                    Text("资料库根目录", style = MaterialTheme.typography.bodyMedium)
+                }
+                if (folders.isEmpty()) {
+                    Text(
+                        "暂无文件夹,可先选根目录,再到资料库页新建/整理",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                } else {
+                    folders.forEach { folder ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth().clickable { target = folder.id },
+                        ) {
+                            RadioButton(selected = target == folder.id, onClick = { target = folder.id })
+                            // C-16 修复:显示父路径,避免嵌套/同名文件夹混淆
+                            Text(
+                                archiveFolderDisplayName(folder, folders),
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(target) }) { Text("归档") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } },
+    )
+}
+
+/** 归档对话框文件夹显示名:前缀父路径(C-16) */
+private fun archiveFolderDisplayName(
+    folder: com.anythingllm.importer.data.library.LibraryFolder,
+    all: List<com.anythingllm.importer.data.library.LibraryFolder>,
+): String {
+    val parents = mutableListOf<String>()
+    var cur = folder.parentId
+    while (cur != null) {
+        val f = all.firstOrNull { it.id == cur } ?: break
+        parents.add(0, f.name)
+        cur = f.parentId
+    }
+    return (parents + folder.name).joinToString(" / ")
 }

@@ -23,8 +23,8 @@ android {
         applicationId = "com.anythingllm.importer"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 3
+        versionName = "1.3.0"
     }
 
     buildTypes {
@@ -87,6 +87,9 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
+
+    // v1.3 FTP 同步客户端(资料库 → PC,commons-net 纯 Java 实现)
+    implementation("commons-net:commons-net:3.11.1")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
 

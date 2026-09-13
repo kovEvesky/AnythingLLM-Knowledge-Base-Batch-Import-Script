@@ -59,6 +59,12 @@ class SettingsViewModel(
         val askForChatTest: Boolean = false,
         val logRetentionDays: String = "30",
         val themeMode: ThemeMode = ThemeMode.SYSTEM,
+        // v1.3 FTP 同步(FR-32)
+        val ftpHost: String = "",
+        val ftpPort: String = "2121",
+        val ftpUser: String = "sync",
+        val ftpPassword: String = "sync123",
+        val ftpRemoteRoot: String = "Library",
         // 交互
         val loaded: Boolean = false,
         val testing: Boolean = false,
@@ -97,6 +103,11 @@ class SettingsViewModel(
                 askForChatTest = cfg.askForChatTest,
                 logRetentionDays = cfg.logRetentionDays.toString(),
                 themeMode = cfg.themeMode,
+                ftpHost = cfg.ftp.host,
+                ftpPort = cfg.ftp.port.toString(),
+                ftpUser = cfg.ftp.username,
+                ftpPassword = cfg.ftp.password,
+                ftpRemoteRoot = cfg.ftp.remoteRoot,
                 loaded = true,
             )
         }
@@ -127,6 +138,11 @@ class SettingsViewModel(
     fun onChatTestChange(v: Boolean) = _uiState.update { it.copy(askForChatTest = v) }
     fun onLogRetentionChange(v: String) = _uiState.update { it.copy(logRetentionDays = v) }
     fun onThemeModeChange(v: ThemeMode) = _uiState.update { it.copy(themeMode = v) }
+    fun onFtpHostChange(v: String) = _uiState.update { it.copy(ftpHost = v, error = null) }
+    fun onFtpPortChange(v: String) = _uiState.update { it.copy(ftpPort = v) }
+    fun onFtpUserChange(v: String) = _uiState.update { it.copy(ftpUser = v) }
+    fun onFtpPasswordChange(v: String) = _uiState.update { it.copy(ftpPassword = v) }
+    fun onFtpRemoteRootChange(v: String) = _uiState.update { it.copy(ftpRemoteRoot = v) }
 
     fun consumeSaved() = _uiState.update { it.copy(saved = false) }
 
@@ -200,6 +216,13 @@ class SettingsViewModel(
         askForChatTest = askForChatTest,
         logRetentionDays = AppConfig.parsePositiveInt(logRetentionDays, 30, max = 3650),
         themeMode = themeMode,
+        ftp = com.anythingllm.importer.data.config.FtpConfig(
+            host = ftpHost.trim(),
+            port = AppConfig.parsePositiveInt(ftpPort, 2121, max = 65535),
+            username = ftpUser.trim().ifEmpty { "sync" },
+            password = ftpPassword,
+            remoteRoot = ftpRemoteRoot.trim().ifEmpty { "Library" },
+        ),
     )
 
     companion object {

@@ -42,6 +42,22 @@ enum class ThemeMode {
 }
 
 /**
+ * FTP 同步配置(v1.3 FR-32,PC 端配合 tools/ftp-server/ftp_server.py):
+ * - host:PC 局域网 IP(未安装 AnythingLLM 场景的同步目标);
+ * - port:与 PC 脚本默认 2121 一致;
+ * - remoteRoot:PC 同步目录下建立的远端根子目录(镜像资料库文件夹树)。
+ */
+data class FtpConfig(
+    val host: String = "",
+    val port: Int = 2121,
+    val username: String = "sync",
+    val password: String = "sync123",
+    val remoteRoot: String = "Library",
+) {
+    val isConfigured: Boolean get() = host.isNotBlank()
+}
+
+/**
  * 应用配置(对应 PC 版 config.json,开发文档 §6.1)。
  * 全部字段可在设置页修改;默认值与文档一致。
  */
@@ -68,6 +84,8 @@ data class AppConfig(
     val askForChatTest: Boolean = false,
     val logRetentionDays: Int = 30,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
+    /** v1.3 FTP 同步配置(资料库 → PC,未安装 AnythingLLM 场景) */
+    val ftp: FtpConfig = FtpConfig(),
 ) {
     companion object {
         const val DEFAULT_BASE_URL = "http://10.0.2.2:3001"

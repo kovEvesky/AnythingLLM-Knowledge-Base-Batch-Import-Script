@@ -72,7 +72,7 @@ fun SettingsScreen(
     Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("服务器设置") },
+                    title = { Text("设置") },
                     navigationIcon = {
                         TextButton(onClick = onBack) { Text("返回") }
                     },
@@ -149,6 +149,63 @@ fun SettingsScreen(
 
                 state.error?.let {
                     Text(it, color = MaterialTheme.colorScheme.error)
+                }
+
+                // ===== FTP 同步(v1.3 FR-32:未安装 AnythingLLM 时的 PC 同步通道) =====
+                ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text("FTP 同步(未安装 AnythingLLM 时用)", style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            "在 PC 上运行 tools/ftp-server 脚本后,手机把「资料库」同步到 PC 目录。手机与 PC 需在同一局域网。",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        OutlinedTextField(
+                            value = state.ftpHost,
+                            onValueChange = viewModel::onFtpHostChange,
+                            modifier = Modifier.fillMaxWidth(),
+                            label = { Text("FTP 主机(PC 局域网 IP)") },
+                            placeholder = { Text("如 192.168.1.100") },
+                            singleLine = true,
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedTextField(
+                                value = state.ftpPort,
+                                onValueChange = viewModel::onFtpPortChange,
+                                modifier = Modifier.weight(1f),
+                                label = { Text("端口") },
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            )
+                            OutlinedTextField(
+                                value = state.ftpRemoteRoot,
+                                onValueChange = viewModel::onFtpRemoteRootChange,
+                                modifier = Modifier.weight(1f),
+                                label = { Text("远端根目录") },
+                                singleLine = true,
+                            )
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedTextField(
+                                value = state.ftpUser,
+                                onValueChange = viewModel::onFtpUserChange,
+                                modifier = Modifier.weight(1f),
+                                label = { Text("用户名") },
+                                singleLine = true,
+                            )
+                            OutlinedTextField(
+                                value = state.ftpPassword,
+                                onValueChange = viewModel::onFtpPasswordChange,
+                                modifier = Modifier.weight(1f),
+                                label = { Text("密码") },
+                                singleLine = true,
+                                visualTransformation = PasswordVisualTransformation(),
+                            )
+                        }
+                    }
                 }
 
                 // ===== 高级参数 =====

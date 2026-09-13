@@ -9,6 +9,7 @@
 
 | 版本 | 日期 | 阶段 | 摘要 |
 |---|---|---|---|
+| 1.3.0 | 2026-09-11 | v1.3 开发 | 未安装 AnythingLLM 用户全程可用:资料库目录树 + FTP 同步到 PC;单测 144 全绿,模拟器端到端全链路通过(收集→归档→目录管理→FTP 同步→增量/变更重传) |
 | 1.2.0-rc | 2026-09-11 | v1.2 开发 | 真机全面回归:链接/单选/多选分享、标记、同步、SAF 导入全链路通过;extractUris 修复生效(多选单 Uri 不再崩溃);服务器回归数据已清理 |
 | 1.0.0 | 2026-09-10 | 阶段 5 | 正式交付:深色模式、Release 签名、回归全过,发布 1.0.0 |
 | 0.4.0 | 2026-09-10 | 阶段 4 | 结果汇总与 JSONL 日志,单测 79 全绿 |
@@ -16,6 +17,37 @@
 | 0.2.0 | 2026-09-10 | 阶段 2 | SAF 选文件与预校验 |
 | 0.1.0 | 2026-09-10 | 阶段 0–1 | 环境搭建、配置与 API 层 |
 | 0.0.1 | 2026-09-10 | 初始化 | 项目骨架与构建链路 |
+
+---
+
+## [1.3.0] — v1.3 资料库 + FTP 同步(2026-09-11)
+
+里程碑:未安装/未配置 AnythingLLM 知识库的用户全程可用。设计文档《DOC/3.0需求回归/10-v1.3开发计划.md》;v1.2 服务器链路全部保留,新增独立第三通道(资料库 + FTP)。
+
+### Added
+- **手机端资料库(第三 Tab)**:本地目录树(`LibraryFolder` parentId 链表 + `LibraryEntry`,整体序列化 `library/library.json`,文件副本 `library/files/{id}_{名}`)。目录管理:新建文件夹(同级重名自动 "(2)" 序号)、重命名、删除(子项上移父级,不物理删文件)、进入/返回上级、条目移动到文件夹/删除、收集箱勾选「归入资料库」归档(移动语义:副本复制入库 + 收集箱条目删除,链接不建文件)。
+- **PC 端 FTP 服务脚本** `tools/ftp-server/`:pyftpdlib 单文件 `ftp_server.py`(免管理员、跨平台,默认 root=脚本同级 `any-sync`、port 2121、user sync、password sync123,`--password-env` 支持环境变量取密码,启动打印局域网 IP)+ `start-ftp-server.bat`(纯 ASCII 防乱码启动器,自动检查 python/pyftpdlib)+ `README.md`(安装/防火墙/手机端配置说明)。
+- **FTP 同步引擎**(commons-net FTPClient,被动模式,控制编码 UTF-8,二进制):目录树镜像到 PC,链接落盘 `.url`(`[InternetShortcut]\r\nURL=...`),文件名保留中文仅清洗非法字符(PC 目录可读可双击);增量判定 `syncedAt==null 或 syncedSize≠当前大小`;幂等覆盖;单条目 2 次指数退避重试;失败保留未同步可重试。
+- **FTP 设置卡片**(设置页):主机/端口(2121)/远端根目录(Library)/用户名(sync)/密码,明文 DataStore 5 键;资料库页 FTP 未配置横幅引导;知识库 Tab 无服务器引导文案。
+- 新增测试:LibraryRepositoryTest 12 + FtpNamingTest 8 + FtpSyncEngineIntegrationTest 2(真实 pyftpdlib 子进程,需本机 python)。
+
+### Changed
+- 底部导航 2 Tab → 3 Tab(收集箱/知识库/资料库);`CollectViewModel.refresh()` 同时刷新资料库状态。
+- FTP 文件命名设计定稿:由"ASCII 化文件名"改为 **UTF-8 可读名**(仅清洗 `\ / : * ? " < > |`),两端控制编码均 UTF-8。
+
+### Fixed
+- PC 脚本日志钩子 `on_file_received/on_file_sent` 引用 `received_bytes/sent_bytes`(pyftpdlib DTPHandler 属性,控制通道 handler 无此属性)抛 AttributeError → 改为 `os.path.getsize(file)` 取落盘真实大小。
+- 设置页保存 FTP 配置后资料库横幅仍显示"未配置":CollectViewModel init 增加 `configRepository.config.collect { ftp = cfg.ftp }` 实时跟随,保存即生效。
+- **C-16** 归档/移动对话框文件夹平铺无层级:子文件夹显示为父路径式("Study / Docs"),避免嵌套/同名文件夹误选(全量用户流程测试中实际发生误选)。
+- **C-17** 资料库子文件夹页系统返回键未拦截(直接退出 App):增加 `BackHandler`,子目录按返回回上级目录。
+- **C-18** 文件夹卡片"子项"计数仅含子文件夹不含条目(归档 3 条仍显示 1 个子项):计数改为子文件夹 + 文件夹内条目数。
+- **C-19** Release 版本号未随 v1.3 更新(versionName=0.1.0):提升为 versionCode=3 / versionName=1.3.0。
+
+### Verified
+- 单测 **144 通过 / 0 失败**(v1.2 基线 122 + 新增 22)。
+- 模拟器端到端(anythingllm_api36):分享→收集箱;新建文件夹持久化;归档移动语义(收集箱清空、文件副本入库);FTP 配置持久化;同步 2/2 成功(PC 端 `.url` + 文件字节一致);二次同步无待同步条目;文件变更(46→48B)重传 1/1;知识库引导文案;服务端日志完整无异常。
+- **全量用户流程重测(2026-09-11,Release v1.3.0)**:链接分享 2 条(系统 Chooser 真实链路)→ 收集箱;文件条目(ShareReceiver 格式种子,Android16 模拟器 adb 直发 URI grant 收紧所致,见设计文档 11.3)→ 收集箱 3 条;建文件夹 Work/Study/Notes 层级;归档 3 条入 Study;FTP 配置(10.0.2.2:2121)持久化 + 横幅消失;同步 3/3 → PC 端 `Library/Study/`(`.url` 格式正确、PDF MD5 一致);二次同步"没有待同步条目";PDF 608→610B 增量重传 1/1(MD5 一致);移动条目(同步态重置)→ 同步后 PC 端新路径出现;删除文件夹(子项上移、文件不删);C-16/17/18 修复后回归通过(路径显示、返回键、计数)。PC 端 FTP 服务日志 4 次会话全部干净(连接/登录/MKD 忽略已存在/STOR/断开)。
+- 测试中环境缺陷记录:adb root push 的种子文件属主 u0_a0 导致 App 写回 EACCES(测试环境问题,chown 修复;归档链路本身无 bug,详见设计文档 11.3-F3)。本轮新增:push 种子文件 SELinux 上下文 category 不符(c219 vs App c220)致 App 读不到收集箱 → `chcon` 修正(测试链路问题,App 自身写入不受影响)。
 
 ---
 

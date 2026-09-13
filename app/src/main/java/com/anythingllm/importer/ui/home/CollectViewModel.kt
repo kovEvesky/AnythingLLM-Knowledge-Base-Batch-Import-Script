@@ -14,20 +14,30 @@ import com.anythingllm.importer.data.api.AnythingLlmClientFactory
 import com.anythingllm.importer.data.collect.CollectEntry
 import com.anythingllm.importer.data.collect.CollectRepository
 import com.anythingllm.importer.data.collect.EntryStatus
+import com.anythingllm.importer.data.collect.EntryType
 import com.anythingllm.importer.data.collect.KnowledgeSnapshot
 import com.anythingllm.importer.data.collect.SnapshotDiff
 import com.anythingllm.importer.data.collect.SnapshotFolder
 import com.anythingllm.importer.data.collect.SnapshotRepository
 import com.anythingllm.importer.data.collect.SnapshotWorkspace
 import com.anythingllm.importer.data.config.ConfigRepository
+import com.anythingllm.importer.data.config.FtpConfig
+import com.anythingllm.importer.data.library.LibraryEntry
+import com.anythingllm.importer.data.library.LibraryEntryType
+import com.anythingllm.importer.data.library.LibraryFolder
+import com.anythingllm.importer.data.library.LibraryRepository
+import com.anythingllm.importer.domain.ftp.FtpSyncEngine
+import com.anythingllm.importer.domain.ftp.FtpSyncState
 import com.anythingllm.importer.domain.sync.SyncItemState
 import com.anythingllm.importer.domain.sync.SyncState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.io.File
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 
@@ -43,6 +53,7 @@ class CollectViewModel(
     private val snapshotRepository: SnapshotRepository,
     private val configRepository: ConfigRepository,
     private val apiFactory: AnythingLlmClientFactory,
+    private val libraryRepository: LibraryRepository,
 ) : ViewModel() {
 
     data class UiState(
@@ -56,6 +67,16 @@ class CollectViewModel(
         val snapshotError: String? = null,
         val sync: SyncState = SyncState(),
         val syncDone: Boolean = false,
+        // v1.3 资料库(FR-30/31/33)
+        val libraryCurrentFolderId: String? = null,
+        val librarySubFolders: List<LibraryFolder> = emptyList(),
+        val libraryEntries: List<LibraryEntry> = emptyList(),
+        val libraryPathChain: List<String> = emptyList(),
+        val libraryAllFolders: List<LibraryFolder> = emptyList(),
+        val libraryAllEntries: List<LibraryEntry> = emptyList(),
+        val ftp: FtpConfig = FtpConfig(),
+        val ftpSync: FtpSyncState = FtpSyncState(),
+        val ftpSyncDone: Boolean = false,
     )
 
     private val _uiState = MutableStateFlow(UiState())
@@ -63,9 +84,15 @@ class CollectViewModel(
 
     init {
         refresh()
+        // v1.3:实时跟随 FTP 配置(设置页保存后资料库横幅/同步立即生效)
+        viewModelScope.launch {
+            configRepository.config.collect { cfg ->
+                _uiState.update { it.copy(ftp = cfg.ftp) }
+            }
+        }
     }
 
-    /** 从本地仓储重读(条目 + 快照);分享接收后/返回主页时调用 */
+    /** 从本地仓储重读(条目 + 快照 + 资料库);分享接收后/返回主页时调用 */
     fun refresh() {
         val snapshot = snapshotRepository.read()
         val all = collectRepository.all()
@@ -77,6 +104,124 @@ class CollectViewModel(
                 snapshot = snapshot,
                 selectedIds = it.selectedIds intersect all.map { e -> e.id }.toSet(),
             )
+        }
+        refreshLibrary()
+    }
+
+    // ===== 资料库(v1.3 FR-30/31):目录浏览与管理 =====
+
+    /** 重读当前目录内容与全量文件夹(移动目标选择用) */
+    fun refreshLibrary() {
+        val current = _uiState.value.libraryCurrentFolderId
+        val (folders, entries) = libraryRepository.childrenOf(current)
+        _uiState.update {
+            it.copy(
+                librarySubFolders = folders,
+                libraryEntries = entries,
+                libraryPathChain = libraryRepository.pathOf(current),
+                libraryAllFolders = libraryRepository.folders(),
+                libraryAllEntries = libraryRepository.entries(),
+            )
+        }
+    }
+
+    fun libraryEnterFolder(id: String) {
+        _uiState.update { it.copy(libraryCurrentFolderId = id) }
+        refreshLibrary()
+    }
+
+    fun libraryGoUp() {
+        val current = _uiState.value.libraryCurrentFolderId ?: return
+        val folder = _uiState.value.libraryAllFolders.firstOrNull { it.id == current } ?: return
+        _uiState.update { it.copy(libraryCurrentFolderId = folder.parentId) }
+        refreshLibrary()
+    }
+
+    fun libraryGoRoot() {
+        _uiState.update { it.copy(libraryCurrentFolderId = null) }
+        refreshLibrary()
+    }
+
+    fun libraryCreateFolder(name: String) {
+        libraryRepository.createFolder(name, _uiState.value.libraryCurrentFolderId)
+        refreshLibrary()
+    }
+
+    fun libraryRenameFolder(id: String, newName: String) {
+        libraryRepository.renameFolder(id, newName)
+        refreshLibrary()
+    }
+
+    fun libraryDeleteFolder(id: String) {
+        val folder = libraryRepository.folders().firstOrNull { it.id == id }
+        libraryRepository.deleteFolder(id)
+        // 当前浏览目录被删 → 回到其父级
+        if (_uiState.value.libraryCurrentFolderId == id) {
+            _uiState.update { it.copy(libraryCurrentFolderId = folder?.parentId) }
+        }
+        refreshLibrary()
+    }
+
+    fun libraryMoveEntry(id: String, folderId: String?) {
+        libraryRepository.moveEntry(id, folderId)
+        refreshLibrary()
+    }
+
+    fun libraryDeleteEntry(id: String) {
+        libraryRepository.deleteEntry(id)
+        refreshLibrary()
+    }
+
+    // ===== 资料库(v1.3):收集箱 → 归档 =====
+
+    /** 勾选的收集箱条目归档到资料库指定文件夹(移动语义:文件副本移入,收集箱条目删除) */
+    fun archiveSelectedToLibrary(folderId: String?) {
+        val ids = _uiState.value.selectedIds
+        if (ids.isEmpty()) return
+        ids.forEach { id ->
+            val entry = collectRepository.all().firstOrNull { it.id == id } ?: return@forEach
+            when (entry.type) {
+                EntryType.FILE -> libraryRepository.archiveFromCollect(
+                    id = entry.id,
+                    type = LibraryEntryType.FILE,
+                    title = entry.fileName ?: entry.id,
+                    url = null,
+                    srcFile = entry.localPath?.let { File(it) },
+                    sizeBytes = entry.sizeBytes,
+                    destFolderId = folderId,
+                )
+                EntryType.LINK -> libraryRepository.archiveFromCollect(
+                    id = entry.id,
+                    type = LibraryEntryType.LINK,
+                    title = entry.displayTitle,
+                    url = entry.url,
+                    srcFile = null,
+                    sizeBytes = 0,
+                    destFolderId = folderId,
+                )
+            }
+            collectRepository.remove(entry.id)
+        }
+        refresh()
+    }
+
+    // ===== 资料库(v1.3 FR-33):FTP 同步到 PC =====
+
+    /** 一键 FTP 同步:加载配置 → 引擎执行(未同步/变更条目)→ 回写同步状态 */
+    fun syncFtpNow() {
+        if (_uiState.value.ftpSync.running) return
+        viewModelScope.launch {
+            val cfg = configRepository.snapshot()
+            _uiState.update { it.copy(ftp = cfg.ftp, ftpSyncDone = false) }
+            val engine = FtpSyncEngine(cfg.ftp, libraryRepository)
+            engine.launch(viewModelScope)
+            _uiState.update { it.copy(ftpSync = engine.state.value) }
+            while (engine.state.value.running) {
+                _uiState.update { it.copy(ftpSync = engine.state.value) }
+                delay(600)
+            }
+            _uiState.update { it.copy(ftpSync = engine.state.value, ftpSyncDone = true) }
+            refreshLibrary()
         }
     }
 
@@ -290,6 +435,7 @@ class CollectViewModel(
                     snapshotRepository = app.snapshotRepository,
                     configRepository = app.configRepository,
                     apiFactory = app.apiFactory,
+                    libraryRepository = app.libraryRepository,
                 )
             } }
         }

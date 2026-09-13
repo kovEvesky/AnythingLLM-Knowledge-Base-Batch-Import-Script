@@ -70,6 +70,15 @@ fun KnowledgeScreen(
         state.snapshotError?.let {
             Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
         }
+        // v1.3 无服务器引导:未安装/未连接 AnythingLLM 时提示走资料库 + FTP 通道
+        if (!state.snapshot.hasData) {
+            Text(
+                "未连接服务器(未安装 AnythingLLM 也可用):请到「资料库」Tab 归档文件,并通过 FTP 同步到 PC。",
+                color = MaterialTheme.colorScheme.tertiary,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+        }
 
         // ===== 同步执行进度(FR-24) =====
         if (state.sync.items.isNotEmpty()) {
