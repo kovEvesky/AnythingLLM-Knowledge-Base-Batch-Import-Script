@@ -22,6 +22,11 @@
     <string name="home_tab_knowledge">知识库</string>
     <string name="home_tab_library">资料库</string>
     <string name="home_quick_import">立即导入(v1.0 即时流程)</string>
+    <string name="guide_title">欢迎使用 AnythingLLM 批量导入</string>
+    <string name="guide_step1">① 收集:从任意 App 分享文件/链接到本应用,自动暂存到「收集箱」</string>
+    <string name="guide_step2">② 整理:勾选条目,标记到服务器文件夹,或归入「资料库」</string>
+    <string name="guide_step3">③ 导入:连接服务器一键同步嵌入;未装服务器时可用 FTP 同步到 PC</string>
+    <string name="guide_confirm">开始使用</string>
 
     <!-- 收集箱 Tab -->
     <string name="collect_select_all">全选</string>
@@ -45,6 +50,10 @@
     <string name="knowledge_open_settings">服务器设置</string>
     <string name="knowledge_open_logs">查看日志</string>
     <string name="knowledge_unmark">取消标记</string>
+    <string name="knowledge_connecting">连接服务器中…</string>
+    <string name="knowledge_syncing_text">同步中 %1$d/%2$d</string>
+    <string name="knowledge_connected">已连接(快照 %1$s)</string>
+    <string name="knowledge_disconnected">未连接:可走「资料库」FTP 通道离线同步,或检查服务器设置</string>
     <string name="knowledge_sync_title">连接服务器并同步嵌入</string>
     <string name="knowledge_offline_hint">未连接服务器(未安装 AnythingLLM 也可用):请到「资料库」Tab 归档文件,并通过 FTP 同步到 PC。</string>
     <string name="knowledge_sync_progress">同步进度 %1$d/%2$d</string>
@@ -73,6 +82,7 @@
     <string name="library_title">资料库</string>
     <string name="library_ftp_settings">FTP 设置</string>
     <string name="library_ftp_syncing">同步中…</string>
+    <string name="library_ftp_syncing_progress">同步中 %1$d/%2$d</string>
     <string name="library_ftp_sync">同步到 PC</string>
     <string name="library_new_folder">新建文件夹</string>
     <string name="library_ftp_not_configured">未配置 FTP 服务器:请点右上角 ⚙ 填写 PC 地址(PC 运行 tools/ftp-server 脚本),手机与 PC 需同一局域网。</string>

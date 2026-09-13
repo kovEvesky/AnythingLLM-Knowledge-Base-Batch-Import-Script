@@ -84,6 +84,8 @@ data class AppConfig(
     val askForChatTest: Boolean = false,
     val logRetentionDays: Int = 30,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
+    /** v1.4 UI-19:首启引导是否已看过(UI 状态,复用 DataStore 通道,不入设置表单) */
+    val guideSeen: Boolean = false,
     /** v1.3 FTP 同步配置(资料库 → PC,未安装 AnythingLLM 场景) */
     val ftp: FtpConfig = FtpConfig(),
 ) {

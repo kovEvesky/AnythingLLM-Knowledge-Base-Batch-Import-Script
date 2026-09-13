@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.outlined.Inbox
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -86,6 +87,13 @@ fun CollectScreen(
 
         if (state.pendingGroups.isEmpty()) {
             Spacer(Modifier.height(24.dp))
+            Icon(
+                Icons.Outlined.Inbox,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.outlineVariant,
+                modifier = Modifier.size(48.dp),
+            )
+            Spacer(Modifier.height(8.dp))
             Text(
                 stringResource(R.string.collect_empty),
                 style = MaterialTheme.typography.bodyMedium,

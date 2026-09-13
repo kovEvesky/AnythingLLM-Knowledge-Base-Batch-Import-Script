@@ -14,8 +14,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.Workspaces
+import androidx.compose.material.icons.outlined.Inbox
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Sync
 import androidx.compose.material3.Button
@@ -79,30 +85,41 @@ fun KnowledgeScreen(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
-        // ===== 醒目同步入口(FR-24) =====
+        // ===== 服务器连接状态卡(UI-20) =====
+        ConnectionStatusCard(
+            hasData = state.snapshot.hasData,
+            snapshotTime = state.snapshot.snapshotTime,
+            error = state.snapshotError,
+        )
+
+        // ===== 醒目同步入口(FR-24, UI-21 阶段化) =====
+        Spacer(Modifier.height(8.dp))
         Button(
             onClick = onSync,
             modifier = Modifier.fillMaxWidth().height(52.dp),
             enabled = !state.refreshingSnapshot && !state.sync.running,
         ) {
-            if (state.refreshingSnapshot || state.sync.running) {
-                CircularProgressIndicator(Modifier.width(20.dp).height(20.dp), strokeWidth = 2.dp)
-            } else {
-                Text("连接服务器并同步嵌入", style = MaterialTheme.typography.titleMedium)
+            when {
+                state.refreshingSnapshot -> {
+                    CircularProgressIndicator(Modifier.width(20.dp).height(20.dp), strokeWidth = 2.dp)
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(R.string.knowledge_connecting), style = MaterialTheme.typography.titleMedium)
+                }
+                state.sync.running -> {
+                    CircularProgressIndicator(Modifier.width(20.dp).height(20.dp), strokeWidth = 2.dp)
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        stringResource(R.string.knowledge_syncing_text, state.sync.doneCount, state.sync.totalCount),
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                }
+                else -> Text(stringResource(R.string.knowledge_sync_title), style = MaterialTheme.typography.titleMedium)
             }
         }
         state.snapshotError?.let {
             Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
         }
-        // v1.3 无服务器引导:未安装/未连接 AnythingLLM 时提示走资料库 + FTP 通道
-        if (!state.snapshot.hasData) {
-            Text(
-                stringResource(R.string.knowledge_offline_hint),
-                color = MaterialTheme.colorScheme.tertiary,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(top = 4.dp),
-            )
-        }
+        // v1.3 无服务器引导已并入连接状态卡(knowledge_disconnected)
 
         // ===== 同步执行进度(FR-24) =====
         if (state.sync.items.isNotEmpty()) {
@@ -147,7 +164,7 @@ fun KnowledgeScreen(
             )
         }
 
-        // ===== 比对结果(FR-21) =====
+        // ===== 比对结果(FR-21, UI-22 结构化) =====
         state.snapshotDiff?.let { diff ->
             if (!diff.isEmpty) {
                 Card(
@@ -155,11 +172,11 @@ fun KnowledgeScreen(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                 ) {
                     Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text("结构变化", style = MaterialTheme.typography.titleSmall)
-                        diff.addedFolders.forEach { Text("+ 文件夹: $it", style = MaterialTheme.typography.bodySmall) }
-                        diff.removedFolders.forEach { Text("- 文件夹: $it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error) }
-                        diff.addedWorkspaces.forEach { Text("+ 工作区: $it", style = MaterialTheme.typography.bodySmall) }
-                        diff.removedWorkspaces.forEach { Text("- 工作区: $it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error) }
+                        Text(stringResource(R.string.knowledge_diff_title), style = MaterialTheme.typography.titleSmall)
+                        diff.addedFolders.forEach { DiffRow(added = true, text = it) }
+                        diff.removedFolders.forEach { DiffRow(added = false, text = it) }
+                        diff.addedWorkspaces.forEach { DiffRow(added = true, text = it) }
+                        diff.removedWorkspaces.forEach { DiffRow(added = false, text = it) }
                     }
                 }
             }
@@ -179,14 +196,32 @@ fun KnowledgeScreen(
         )
         Card(Modifier.fillMaxWidth().padding(top = 8.dp)) {
             Column(Modifier.padding(12.dp)) {
-                Text(stringResource(R.string.knowledge_folders, state.snapshot.folders.size), style = MaterialTheme.typography.labelLarge)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Filled.Folder,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.width(16.dp).height(16.dp),
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text(stringResource(R.string.knowledge_folders, state.snapshot.folders.size), style = MaterialTheme.typography.labelLarge)
+                }
                 state.snapshot.folders.forEach { f ->
                     Text("• ${f.name}", style = MaterialTheme.typography.bodyMedium)
                 }
                 Spacer(Modifier.height(8.dp))
                 HorizontalDivider()
                 Spacer(Modifier.height(8.dp))
-                Text(stringResource(R.string.knowledge_workspaces, state.snapshot.workspaces.size), style = MaterialTheme.typography.labelLarge)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Filled.Workspaces,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier.width(16.dp).height(16.dp),
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text(stringResource(R.string.knowledge_workspaces, state.snapshot.workspaces.size), style = MaterialTheme.typography.labelLarge)
+                }
                 state.snapshot.workspaces.forEach { w ->
                     Text("• ${w.name}", style = MaterialTheme.typography.bodyMedium)
                 }
@@ -197,11 +232,20 @@ fun KnowledgeScreen(
         Spacer(Modifier.height(16.dp))
         Text(stringResource(R.string.knowledge_marked, state.markedEntries.size), style = MaterialTheme.typography.titleMedium)
         if (state.markedEntries.isEmpty()) {
-            Text(
-                stringResource(R.string.knowledge_marked_empty),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Outlined.Inbox,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.width(18.dp).height(18.dp),
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    stringResource(R.string.knowledge_marked_empty),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         } else {
             state.markedEntries.forEach { entry ->
                 MarkedEntryCard(
@@ -218,6 +262,51 @@ fun KnowledgeScreen(
             OutlinedButton(onClick = onOpenSettings, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.knowledge_open_settings)) }
             OutlinedButton(onClick = onOpenLogs, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.knowledge_open_logs)) }
         }
+    }
+}
+
+/** UI-20:服务器连接状态卡(已连接/未连接/错误) */
+@Composable
+private fun ConnectionStatusCard(hasData: Boolean, snapshotTime: String, error: String?) {
+    val (icon, tint, label) = when {
+        error != null -> Triple(
+            Icons.Filled.ErrorOutline, MaterialTheme.colorScheme.error, error,
+        )
+        hasData -> Triple(
+            Icons.Filled.CheckCircle,
+            MaterialTheme.colorScheme.primary,
+            stringResource(R.string.knowledge_connected, snapshotTime.take(16).replace('T', ' ')),
+        )
+        else -> Triple(
+            Icons.Filled.Info,
+            MaterialTheme.colorScheme.tertiary,
+            stringResource(R.string.knowledge_disconnected),
+        )
+    }
+    Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
+        Row(
+            Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.width(18.dp).height(18.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(label, style = MaterialTheme.typography.bodySmall, color = tint)
+        }
+    }
+}
+
+/** UI-22:比对行(新增=加号/移除=减号) */
+@Composable
+private fun DiffRow(added: Boolean, text: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(
+            if (added) Icons.Filled.Add else Icons.Filled.Remove,
+            contentDescription = null,
+            tint = if (added) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+            modifier = Modifier.width(14.dp).height(14.dp),
+        )
+        Spacer(Modifier.width(4.dp))
+        Text(text, style = MaterialTheme.typography.bodySmall)
     }
 }
 

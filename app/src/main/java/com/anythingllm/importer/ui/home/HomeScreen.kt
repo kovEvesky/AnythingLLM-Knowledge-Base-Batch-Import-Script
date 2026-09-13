@@ -1,6 +1,7 @@
 package com.anythingllm.importer.ui.home
 import com.anythingllm.importer.R
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -9,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -24,6 +27,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -32,6 +36,7 @@ import androidx.compose.material.icons.automirrored.filled.LibraryBooks
 import androidx.compose.material.icons.filled.CreateNewFolder
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Inbox
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
@@ -39,6 +44,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.anythingllm.importer.AnythingLLMApp
+import kotlinx.coroutines.launch
 
 /**
  * 三主页(v1.2 FR-23 + v1.3):
@@ -72,26 +79,36 @@ fun HomeScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text(if (tab == 0) "收集箱" else if (tab == 1) "知识库" else "资料库") })
+            TopAppBar(
+                title = {
+                    Text(
+                        when (tab) {
+                            0 -> stringResource(R.string.home_tab_inbox)
+                            1 -> stringResource(R.string.home_tab_knowledge)
+                            else -> stringResource(R.string.library_title)
+                        },
+                    )
+                },
+            )
         },
         bottomBar = {
             NavigationBar {
                 NavigationBarItem(
                     selected = tab == 0,
                     onClick = { tab = 0 },
-                    icon = { Icon(Icons.Filled.Inbox, contentDescription = null) },
+                    icon = { Icon(Icons.Filled.Inbox, contentDescription = stringResource(R.string.home_tab_inbox)) },
                     label = { Text(stringResource(R.string.home_tab_inbox)) },
                 )
                 NavigationBarItem(
                     selected = tab == 1,
                     onClick = { tab = 1 },
-                    icon = { Icon(Icons.AutoMirrored.Filled.LibraryBooks, contentDescription = null) },
+                    icon = { Icon(Icons.AutoMirrored.Filled.LibraryBooks, contentDescription = stringResource(R.string.home_tab_knowledge)) },
                     label = { Text(stringResource(R.string.home_tab_knowledge)) },
                 )
                 NavigationBarItem(
                     selected = tab == 2,
                     onClick = { tab = 2 },
-                    icon = { Icon(Icons.Filled.Folder, contentDescription = null) },
+                    icon = { Icon(Icons.Filled.Folder, contentDescription = stringResource(R.string.library_title)) },
                     label = { Text(stringResource(R.string.library_title)) },
                 )
             }
@@ -145,5 +162,31 @@ fun HomeScreen(
                 modifier = Modifier.padding(padding),
             )
         }
+    }
+
+    // ===== UI-19 首启引导 =====
+    val appContext = LocalContext.current.applicationContext as AnythingLLMApp
+    val repository = remember { appContext.configRepository }
+    val scope = rememberCoroutineScope()
+    var showGuide by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { showGuide = !repository.snapshot().guideSeen }
+    if (showGuide) {
+        AlertDialog(
+            onDismissRequest = { /* 必须点"开始使用" */ },
+            title = { Text(stringResource(R.string.guide_title)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(R.string.guide_step1), style = MaterialTheme.typography.bodyMedium)
+                    Text(stringResource(R.string.guide_step2), style = MaterialTheme.typography.bodyMedium)
+                    Text(stringResource(R.string.guide_step3), style = MaterialTheme.typography.bodyMedium)
+                }
+            },
+            confirmButton = {
+                Button(onClick = {
+                    scope.launch { repository.markGuideSeen() }
+                    showGuide = false
+                }) { Text(stringResource(R.string.guide_confirm)) }
+            },
+        )
     }
 }

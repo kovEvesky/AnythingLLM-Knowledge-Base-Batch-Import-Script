@@ -2,8 +2,10 @@ package com.anythingllm.importer.ui.home
 import com.anythingllm.importer.R
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -27,11 +30,13 @@ import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Inbox
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Sync
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
@@ -49,6 +54,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import com.anythingllm.importer.data.library.LibraryEntry
@@ -116,9 +123,19 @@ fun LibraryScreen(
                 modifier = Modifier.weight(1f),
                 enabled = !state.ftpSync.running,
             ) {
-                Icon(Icons.Filled.CloudUpload, contentDescription = null, modifier = Modifier.width(18.dp))
-                Spacer(Modifier.width(4.dp))
-                Text(if (state.ftpSync.running) "同步中…" else "同步到 PC")
+                // UI-21 同款阶段化:空闲=图标+文案,同步中=进度+计数
+                if (state.ftpSync.running) {
+                    CircularProgressIndicator(Modifier.width(18.dp).height(18.dp), strokeWidth = 2.dp)
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        stringResource(R.string.library_ftp_syncing_progress, state.ftpSync.doneCount, state.ftpSync.totalCount),
+                        maxLines = 1,
+                    )
+                } else {
+                    Icon(Icons.Filled.CloudUpload, contentDescription = null, modifier = Modifier.width(18.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text(stringResource(R.string.library_ftp_sync))
+                }
             }
             OutlinedButton(onClick = { showNewFolder = true }, modifier = Modifier.weight(1f)) {
                 Icon(Icons.Filled.CreateNewFolder, contentDescription = null, modifier = Modifier.width(18.dp))
@@ -179,6 +196,13 @@ fun LibraryScreen(
         // ===== 内容 =====
         if (state.librarySubFolders.isEmpty() && state.libraryEntries.isEmpty()) {
             Spacer(Modifier.height(32.dp))
+            Icon(
+                Icons.Outlined.Inbox,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.outlineVariant,
+                modifier = Modifier.size(48.dp),
+            )
+            Spacer(Modifier.height(8.dp))
             Text(
                 stringResource(R.string.library_empty),
                 style = MaterialTheme.typography.bodyMedium,
@@ -353,11 +377,17 @@ private fun EntryCard(
             Spacer(Modifier.width(8.dp))
             Column(Modifier.weight(1f).clickable(onClick = onClick)) {
                 Text(entry.title, style = MaterialTheme.typography.bodyLarge, maxLines = 2)
-                Text(
-                    entryMeta(entry) + " · " + if (entry.isSynced) "已同步" else "未同步",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        entryMeta(entry),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    SyncBadge(isSynced = entry.isSynced)
+                }
             }
             IconButton(onClick = { menu = true }) {
                 Icon(Icons.Filled.MoreVert, contentDescription = "条目操作")
@@ -373,6 +403,29 @@ private fun EntryCard(
 private fun entryMeta(entry: LibraryEntry): String = when (entry.type) {
     LibraryEntryType.FILE -> formatBytes(entry.sizeBytes)
     LibraryEntryType.LINK -> entry.url.orEmpty()
+}
+
+/** NEW-02:同步状态徽标(已同步=primaryContainer 底 / 未同步=surfaceVariant 底) */
+@Composable
+private fun SyncBadge(isSynced: Boolean) {
+    val (container, content) = if (isSynced) {
+        MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
+    } else {
+        MaterialTheme.colorScheme.surfaceVariant to MaterialTheme.colorScheme.onSurfaceVariant
+    }
+    Box(
+        Modifier
+            .clip(MaterialTheme.shapes.extraSmall)
+            .background(container)
+            .padding(horizontal = 6.dp, vertical = 2.dp),
+    ) {
+        Text(
+            stringResource(if (isSynced) R.string.library_synced else R.string.library_unsynced),
+            style = MaterialTheme.typography.labelSmall,
+            color = content,
+            maxLines = 1,
+        )
+    }
 }
 
 @Composable

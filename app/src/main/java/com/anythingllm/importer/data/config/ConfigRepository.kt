@@ -68,6 +68,8 @@ class ConfigRepository(private val context: Context) {
         val FTP_USER = stringPreferencesKey("ftp_user")
         val FTP_PASSWORD = stringPreferencesKey("ftp_password")
         val FTP_REMOTE_ROOT = stringPreferencesKey("ftp_remote_root")
+        // v1.4 UI-19 首启引导
+        val GUIDE_SEEN = booleanPreferencesKey("guide_seen")
     }
 
     /** 配置流:每次 DataStore 变更/Key 解密后发射新值 */
@@ -102,6 +104,7 @@ class ConfigRepository(private val context: Context) {
             themeMode = runCatching {
                 ThemeMode.valueOf(prefs[Keys.THEME_MODE] ?: "")
             }.getOrDefault(ThemeMode.SYSTEM),
+            guideSeen = prefs[Keys.GUIDE_SEEN] ?: false,
             ftp = FtpConfig(
                 host = prefs[Keys.FTP_HOST] ?: "",
                 port = prefs[Keys.FTP_PORT] ?: 2121,
@@ -114,6 +117,11 @@ class ConfigRepository(private val context: Context) {
 
     /** 一次性读取当前配置(测试连接/导入前取快照用) */
     suspend fun snapshot(): AppConfig = config.first()
+
+    /** UI-19:标记首启引导已看过(独立写入,不触发全量保存) */
+    suspend fun markGuideSeen() {
+        context.configDataStore.edit { prefs -> prefs[Keys.GUIDE_SEEN] = true }
+    }
 
     /** 保存全部配置;apiKey 为空时不覆盖已存 Key(保存前经 normalizeApiKey 规范化) */
     suspend fun save(config: AppConfig) {
@@ -143,6 +151,7 @@ class ConfigRepository(private val context: Context) {
             prefs[Keys.ASK_FOR_CHAT_TEST] = config.askForChatTest
             prefs[Keys.LOG_RETENTION_DAYS] = config.logRetentionDays
             prefs[Keys.THEME_MODE] = config.themeMode.name
+            prefs[Keys.GUIDE_SEEN] = config.guideSeen
             prefs[Keys.FTP_HOST] = config.ftp.host
             prefs[Keys.FTP_PORT] = config.ftp.port
             prefs[Keys.FTP_USER] = config.ftp.username
