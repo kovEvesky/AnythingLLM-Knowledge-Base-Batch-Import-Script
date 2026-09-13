@@ -1,5 +1,10 @@
 package com.anythingllm.importer.ui.navigation
 
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -31,7 +36,15 @@ object Routes {
 @Composable
 fun AppNav() {
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = Routes.HOME) {
+    // UI-23:页面过渡动画(进入=淡入+轻微右滑,退出=淡出,pop 反向),时长 ≤220ms 保持轻快
+    NavHost(
+        navController = navController,
+        startDestination = Routes.HOME,
+        enterTransition = { fadeIn(tween(220)) + slideInHorizontally(tween(220)) { it / 20 } },
+        exitTransition = { fadeOut(tween(180)) },
+        popEnterTransition = { fadeIn(tween(220)) },
+        popExitTransition = { fadeOut(tween(180)) + slideOutHorizontally(tween(180)) { it / 20 } },
+    ) {
         composable(Routes.HOME) {
             HomeScreen(
                 onOpenSettings = { navController.navigate(Routes.SETTINGS) },
