@@ -1,5 +1,0 @@
-chore(v1.9) 收尾:Release APK v1.9.0 交付+CHANGELOG完成标记
-
-- Release APK(app-release.apk,14.4MB,V2签名)归档 DOC/5.0V1.9交互重构/app-release-v1.9.apk
-- CHANGELOG:v1.9.0 概览更新为完成状态,阶段1-5全部落地
-- 端到端最终验证:服务器「工作」文件夹+同名工作区(4c010059)自动创建,slug回填favorites.json(A2完整落地)
