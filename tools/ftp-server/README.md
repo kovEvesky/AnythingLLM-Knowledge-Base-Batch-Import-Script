@@ -1,23 +1,27 @@
-# FTP 同步服务(PC 端)— AnythingLLM-Android v1.3
+# FTP 同步服务(PC 端)— AnythingLLM-Android v1.4
 
 未安装 AnythingLLM 时,手机 App 作为同步软件,把「资料库」内容通过 FTP 上传到 PC 目录。
 本脚本在 PC 上开启一个轻量 FTP 服务(无需安装 AnythingLLM,无需管理员权限)。
 
-## 1. 一次性安装依赖
+## 1. 启动服务(推荐,自动装依赖)
+
+双击 `start-ftp-server.bat` 即可:
+- 自动检测 Python;检测 `pyftpdlib` 缺失时**自动执行 `pip install pyftpdlib`**;
+- 安装失败会给出国内镜像重试命令(如清华源),无需手动查文档。
+
+命令行启动(依赖需已安装,见下):
+
+```bat
+python ftp_server.py
+```
+
+## 2. 手动安装依赖(仅命令行方式需要)
 
 ```bat
 pip install pyftpdlib
 ```
 
-(已安装 Python 3.9+;若 `pip` 不在 PATH,用 `python -m pip install pyftpdlib`。)
-
-## 2. 启动服务
-
-双击 `start-ftp-server.bat`,或命令行:
-
-```bat
-python ftp_server.py
-```
+(已安装 Python 3.9+;若 `pip` 不在 PATH,用 `python -m pip install pyftpdlib`;国内网络慢可加 `-i https://pypi.tuna.tsinghua.edu.cn/simple`。)
 
 可自定义参数(全部可选):
 

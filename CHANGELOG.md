@@ -52,6 +52,7 @@
 - **UI-02/03** 长文件夹/工作区列表对话框内容溢出不可见→可滚动 + 条目截断。
 - **UI-05** 重复文件对话框按钮挤在一行 → RadioButton 单选(保留/跳过/中止)+ 整行可点 + 复选时禁用中止。
 - NEW-04 编译期修复实证:`RoundedCornerShape(Shape)` 非法→clip(shapes.small);`state.loadError` 委托属性 smart cast 不可→toString();InsertDriveFile deprecated→AutoMirrored。
+- **PC 启动器自动装依赖**:`tools/ftp-server/start-ftp-server.bat` 检测 pyftpdlib 缺失时自动 `pip install`,失败给镜像提示(清华源),不再要求手动装;`ftp_server.py`/README 版本号同步 v1.4,依赖提示指向启动器。实测两条路径(已有依赖直接启动 / venv 隔离缺依赖自动安装后启动)均通过。
 
 ---
 

@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-AnythingLLM-Android v1.3 - PC FTP 同步服务
+AnythingLLM-Android v1.4 - PC FTP 同步服务
 =========================================
 未安装 AnythingLLM 时,手机 App 通过本脚本提供的 FTP 服务,
 把「资料库」内容同步到 PC 指定目录(目录结构镜像手机端文件夹树)。
 
-依赖: pyftpdlib (pip install pyftpdlib)
+依赖: pyftpdlib (双击 start-ftp-server.bat 会自动安装;手动: pip install pyftpdlib)
 用法:
     python ftp_server.py [--root D:\\AnySync] [--port 2121]
                          [--user sync] [--password sync123]
@@ -51,7 +51,7 @@ def lan_ipv4_addresses():
 
 
 def main():
-    parser = argparse.ArgumentParser(description="AnythingLLM-Android v1.3 FTP 同步服务")
+    parser = argparse.ArgumentParser(description="AnythingLLM-Android v1.4 FTP 同步服务")
     parser.add_argument("--root", default=None, help="PC 同步目录(默认:脚本同级 any-sync)")
     parser.add_argument("--port", type=int, default=2121, help="FTP 端口(默认 2121)")
     parser.add_argument("--user", default="sync", help="FTP 用户名(默认 sync)")
@@ -79,7 +79,7 @@ def main():
         from pyftpdlib.handlers import FTPHandler
         from pyftpdlib.servers import FTPServer
     except ImportError:
-        print("[错误] 缺少 pyftpdlib,请先执行:  pip install pyftpdlib")
+        print("[错误] 缺少 pyftpdlib。请双击 start-ftp-server.bat 自动安装,或手动执行: pip install pyftpdlib")
         sys.exit(1)
 
     authorizer = DummyAuthorizer()
@@ -88,7 +88,7 @@ def main():
     handler = FTPHandler
     handler.authorizer = authorizer
     handler.encoding = "utf-8"
-    handler.banner = "AnythingLLM-Android FTP Sync (v1.3)"
+    handler.banner = "AnythingLLM-Android FTP Sync (v1.4)"
 
     class LoggedHandler(handler):
         def on_connect(self):
@@ -110,7 +110,7 @@ def main():
 
     server = FTPServer(("0.0.0.0", args.port), LoggedHandler)
     print("=" * 60, flush=True)
-    print("AnythingLLM-Android v1.3 FTP 同步服务已启动", flush=True)
+    print("AnythingLLM-Android v1.4 FTP 同步服务已启动", flush=True)
     print("  本机目录 : %s" % root, flush=True)
     print("  端口     : %d" % args.port, flush=True)
     print("  账号     : %s / %s" % (args.user, "*" * len(pwd)), flush=True)
