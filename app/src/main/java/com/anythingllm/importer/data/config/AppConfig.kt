@@ -99,6 +99,11 @@ data class AppConfig(
     val silentReceive: Boolean = true,
     /** v1.7 接收成功时短震动反馈 */
     val hapticOnReceive: Boolean = true,
+    // ===== v1.9 收藏夹体系 =====
+    /** v1.9 默认收藏夹 id(即时导入预填、批量标记目标、气泡排序置顶;多夹时右滑仍弹气泡,A1 定稿) */
+    val defaultFolderId: String = "",
+    /** v1.9 WiFi 下自动同步开关(Q8 定稿) */
+    val wifiAutoSync: Boolean = false,
 ) {
     companion object {
         const val DEFAULT_BASE_URL = "http://10.0.2.2:3001"

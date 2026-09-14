@@ -9,6 +9,7 @@
 
 | 版本 | 日期 | 阶段 | 摘要 |
 |---|---|---|---|
+| 1.9.0 | 2026-09-14 | v1.9 交互重构(进行中) | 重塑为 Mark To(mt) 个人收藏流:四 Tab(Mark/To/Sync/Settings)、收藏夹唯一分类体系、流式收件箱左右滑、双通道同步(阶段推进中) |
 | 1.7.0 | 2026-09-14 | v1.7 收件箱范式 | 信息收集类 App(Cubox/flomo/抖音收藏)交互范式落地:默认入库位置一键入箱、条目左右滑手势分拣、单击底部抽屉连续整理、接收静默+短震动;三 Tab 切换 Crossfade;单测全绿 |
 | 1.6.0 | 2026-09-14 | v1.6 Mac 服务器版 | 新增 macOS 端 FTP 服务器启动器 start-ftp-server.command(自动装依赖+二维码+权限操作提示:防火墙放行/本地网络/隔离解除),复用跨平台 ftp_server.py;README 增加 macOS 章节 |
 | 1.5.1 | 2026-09-14 | v1.5.1 补丁 | PC FTP 脚本 IP 排序优化:192.168 网段优先(虚拟网卡 172.25.x 后置),二维码默认输出手机可连的物理局域网 IP(实测 192.168.8.71 优先) |
@@ -22,6 +23,39 @@
 | 0.2.0 | 2026-09-10 | 阶段 2 | SAF 选文件与预校验 |
 | 0.1.0 | 2026-09-10 | 阶段 0–1 | 环境搭建、配置与 API 层 |
 | 0.0.1 | 2026-09-10 | 初始化 | 项目骨架与构建链路 |
+
+---
+
+## [1.9.0] — v1.9 交互重构:Mark To(进行中,2026-09-14)
+
+> 设计依据:`DOC/v1.9最终设计方案/MarkTo-V1.9-最终设计方案.md`(定稿,Q1–Q11 全部答复)。
+> 目标:把应用从「AnythingLLM 批量导入工具」重塑为「Mark To(mt)」——"分享即流式、滑一下即归类"的个人收藏流,
+> 配「收藏夹 → FTP / AnythingLLM 双通道同步」。未决项 A1–A8 已全部按推荐定稿,期间无需再确认。
+> 本区块随阶段推进追加;当前进度:**阶段 1(数据层)完成**。
+
+### Added(阶段 1 · 数据层)
+- **收藏夹模型**(`data/favorite/FavoriteFolder.kt`):`FavoriteFolder(id, name, color ARGB, builtin, sortOrder, createdAt, isTrash, serverWorkspaceSlug)`;
+  `FolderPalette` 12 色调色板(青蓝/蓝/紫/粉/红/橙/黄/绿/青/棕/灰/黑)。
+- **收藏夹仓储**(`data/favorite/FavoriteRepository.kt`):`favorites.json` 整体序列化(可 JVM 单测);
+  种子四夹 **工作(蓝)/ 学习(橙)/ 积累(绿)/ 回收站(灰,builtin 不可删/改名/恒排最后)**;
+  重名自动加序号;名称清洗防路径穿越(全非法字符视为空);拖动排序 `reorder()`;服务器工作区 slug 回填。
+- **CollectEntry 扩展**(`data/collect/CollectEntry.kt`):`markFolder → markFolderId`(收藏夹 id,旧字段保留追溯)、
+  `markedAt`(灰卡沉底排序)、`sourceApp`(来源 App);`EntryStatus + TRASHED`(左滑删除进回收站,Q4);
+  `isGrayCard` 灰卡判定(A3 定稿:EXECUTED/FAILED 保留灰卡可见)。
+- **旧数据迁移**(`data/favorite/FavoriteMigration.kt` + `AnythingLLMApp` 启动版本门控,Q10 定稿):旧 `markFolder`
+  条目按文件夹名自动建同名收藏夹归入;同名复用;空名/回收站同名归入"积累";服务器端由用户手动清理。
+- **配置扩展**(`AppConfig/ConfigRepository`):`defaultFolderId`(默认收藏夹)、`wifiAutoSync`(WiFi 自动同步开关)、
+  `favorites_migrated_v19` 迁移标记。
+
+### Changed
+- `AnythingLLMApp` 注册 `favoriteRepository`(私有 filesDir/favorites),启动协程执行一次性迁移(失败下次启动重试,不阻塞)。
+
+### Notes
+- 修复三处实现细节(FavoriteRepository 单测暴露):全非法字符名清洗残留下划线未回退;空名重命名未拒绝;
+  回收站 sortOrder 用 `hashCode()%100` 可能为负导致 Int 溢出 → 固定 `Int.MAX_VALUE-1`。
+
+### Verified(阶段 1)
+- `testDebugUnitTest` 全绿:**180 项**(基线 163 + 新增 FavoriteRepository 9 + FavoriteMigration 7 + 迁移注册),无回归。
 
 ---
 

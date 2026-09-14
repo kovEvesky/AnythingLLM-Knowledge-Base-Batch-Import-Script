@@ -76,6 +76,10 @@ class ConfigRepository(private val context: Context) {
         val LAST_MARK_WORKSPACE = stringPreferencesKey("last_mark_workspace")
         val SILENT_RECEIVE = booleanPreferencesKey("silent_receive")
         val HAPTIC_ON_RECEIVE = booleanPreferencesKey("haptic_on_receive")
+        // v1.9 收藏夹体系
+        val DEFAULT_FOLDER_ID = stringPreferencesKey("default_folder_id")
+        val WIFI_AUTO_SYNC = booleanPreferencesKey("wifi_auto_sync")
+        val FAVORITES_MIGRATED = booleanPreferencesKey("favorites_migrated_v19")
     }
 
     /** 配置流:每次 DataStore 变更/Key 解密后发射新值 */
@@ -116,6 +120,8 @@ class ConfigRepository(private val context: Context) {
             lastMarkWorkspace = prefs[Keys.LAST_MARK_WORKSPACE] ?: "",
             silentReceive = prefs[Keys.SILENT_RECEIVE] ?: true,
             hapticOnReceive = prefs[Keys.HAPTIC_ON_RECEIVE] ?: true,
+            defaultFolderId = prefs[Keys.DEFAULT_FOLDER_ID] ?: "",
+            wifiAutoSync = prefs[Keys.WIFI_AUTO_SYNC] ?: false,
             ftp = FtpConfig(
                 host = prefs[Keys.FTP_HOST] ?: "",
                 port = prefs[Keys.FTP_PORT] ?: 2121,
@@ -140,6 +146,16 @@ class ConfigRepository(private val context: Context) {
             prefs[Keys.LAST_MARK_FOLDER] = folder
             prefs[Keys.LAST_MARK_WORKSPACE] = workspace ?: ""
         }
+    }
+
+    // ===== v1.9 收藏夹体系 =====
+
+    /** 旧数据迁移(Q10 定稿:全部保留)是否已执行(版本门控) */
+    suspend fun isFavoritesMigrated(): Boolean =
+        context.configDataStore.data.first()[Keys.FAVORITES_MIGRATED] ?: false
+
+    suspend fun markFavoritesMigrated() {
+        context.configDataStore.edit { prefs -> prefs[Keys.FAVORITES_MIGRATED] = true }
     }
 
     /** 保存全部配置;apiKey 为空时不覆盖已存 Key(保存前经 normalizeApiKey 规范化) */
@@ -176,6 +192,8 @@ class ConfigRepository(private val context: Context) {
             prefs[Keys.LAST_MARK_WORKSPACE] = config.lastMarkWorkspace
             prefs[Keys.SILENT_RECEIVE] = config.silentReceive
             prefs[Keys.HAPTIC_ON_RECEIVE] = config.hapticOnReceive
+            prefs[Keys.DEFAULT_FOLDER_ID] = config.defaultFolderId
+            prefs[Keys.WIFI_AUTO_SYNC] = config.wifiAutoSync
             prefs[Keys.FTP_HOST] = config.ftp.host
             prefs[Keys.FTP_PORT] = config.ftp.port
             prefs[Keys.FTP_USER] = config.ftp.username

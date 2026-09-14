@@ -1,0 +1,1 @@
+feat(v1.9) 阶段1数据层: 收藏夹模型+仓储+种子+迁移, CollectEntry扩展(TRASHED/markFolderId/markedAt/sourceApp), 配置扩展; 单测180全绿

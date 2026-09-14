@@ -44,6 +44,15 @@ class CollectRepository(
     /** 已标记待执行条目(含执行中与执行失败可重试;R15 修复:FAILED 保留在此区供重选/重试) */
     fun marked(): List<CollectEntry> = all().filter { it.status == EntryStatus.MARKED || it.status == EntryStatus.EXECUTING || it.status == EntryStatus.FAILED }
 
+    /** v1.9 已回收条目(左滑删除 → 回收站收藏夹,Q4:不参与同步) */
+    fun trashed(): List<CollectEntry> = all().filter { it.isTrashed }
+
+    /** v1.9 灰卡全集(已归入/已回收/执行中/已执行/失败;A3 定稿执行终态保留灰卡可见) */
+    fun grayCards(): List<CollectEntry> = all().filter { it.isGrayCard }
+
+    /** v1.9 白卡(未标记,流式列表前段按 collectedAt 倒序) */
+    fun whiteCards(): List<CollectEntry> = all().filter { it.status == EntryStatus.PENDING }
+
     /** 按收集日分组(新→旧),组内保持加入顺序 */
     fun groupByDay(entries: List<CollectEntry>): List<Pair<String, List<CollectEntry>>> =
         entries.groupBy { dayLabel(it.collectedAt) }

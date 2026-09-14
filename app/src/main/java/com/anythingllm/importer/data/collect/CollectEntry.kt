@@ -36,6 +36,9 @@ enum class EntryStatus {
 
     /** 执行失败(可重试) */
     FAILED,
+
+    /** v1.9 已删除(左滑进回收站收藏夹):灰卡、可撤销、不参与同步(Q4) */
+    TRASHED,
 }
 
 /**
@@ -56,8 +59,15 @@ data class CollectEntry(
     val title: String? = null,
     val collectedAt: String,
     val status: EntryStatus = EntryStatus.PENDING,
+    /** v1.2 标记目标:服务器文件夹名(v1.9 起仅作旧数据追溯,新标记走 markFolderId) */
     val markFolder: String? = null,
     val markWorkspace: String? = null,
+    /** v1.9 标记目标:收藏夹 id(唯一分类体系,Q3 定稿) */
+    val markFolderId: String? = null,
+    /** v1.9 标记时间(灰卡沉底排序/展示;撤销时清空) */
+    val markedAt: String? = null,
+    /** v1.9 来源 App(ClipDescription.label 尽力获取,未知兜底,Q2) */
+    val sourceApp: String? = null,
     val serverTitle: String? = null,
     val serverLocation: String? = null,
     val error: String? = null,
@@ -73,4 +83,12 @@ data class CollectEntry(
     /** 是否终态(执行完成/失败) */
     val isTerminal: Boolean
         get() = status == EntryStatus.EXECUTED || status == EntryStatus.FAILED
+
+    /** v1.9 灰卡判定(流式列表沉底):已归入 / 已回收 / 执行中 / 已执行 / 失败(A3 定稿:执行终态保留灰卡可见) */
+    val isGrayCard: Boolean
+        get() = status != EntryStatus.PENDING
+
+    /** v1.9 是否在回收站 */
+    val isTrashed: Boolean
+        get() = status == EntryStatus.TRASHED
 }
