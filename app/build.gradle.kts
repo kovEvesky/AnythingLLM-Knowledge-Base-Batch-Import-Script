@@ -23,8 +23,8 @@ android {
         applicationId = "com.anythingllm.importer"
         minSdk = 26
         targetSdk = 36
-        versionCode = 7
-        versionName = "1.9.0"
+        versionCode = 8
+        versionName = "1.9.1"
     }
 
     buildTypes {

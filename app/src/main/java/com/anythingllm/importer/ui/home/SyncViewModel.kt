@@ -116,33 +116,43 @@ class SyncViewModel(
             )
         }
         viewModelScope.launch {
-            when (s.channel) {
-                SyncChannel.FTP -> {
-                    val cfg = app.configRepository.snapshot()
-                    val engine = CollectFtpSyncEngine(cfg.ftp, app.collectRepository, app.favoriteRepository)
-                    ftpEngine = engine
-                    engine.launch(viewModelScope, entries)
-                    engine.state.collect { st -> onEngineState(st) }
+            try {
+                when (s.channel) {
+                    SyncChannel.FTP -> {
+                        val cfg = app.configRepository.snapshot()
+                        val engine = CollectFtpSyncEngine(cfg.ftp, app.collectRepository, app.favoriteRepository)
+                        ftpEngine = engine
+                        engine.launch(viewModelScope, entries)
+                        engine.state.collect { st -> onEngineState(st) }
+                    }
+                    SyncChannel.ANY -> {
+                        val cfg = app.configRepository.snapshot()
+                        val api = app.apiFactory.create(
+                            baseUrl = cfg.baseUrl,
+                            apiKey = cfg.apiKey,
+                            connectTimeoutSec = cfg.probeTimeoutSec.toLong(),
+                            readTimeoutSec = cfg.uploadTimeoutSec.toLong(),
+                            writeTimeoutSec = cfg.uploadTimeoutSec.toLong(),
+                        )
+                        val engine = SyncEngine(
+                            api = api,
+                            config = cfg,
+                            bodyProvider = UriFileBodyProvider(app.contentResolver),
+                            collectRepository = app.collectRepository,
+                            favoriteRepository = app.favoriteRepository,
+                        )
+                        llmEngine = engine
+                        engine.launch(viewModelScope, entries)
+                        engine.state.collect { st -> onEngineState(st) }
+                    }
                 }
-                SyncChannel.ANY -> {
-                    val cfg = app.configRepository.snapshot()
-                    val api = app.apiFactory.create(
-                        baseUrl = cfg.baseUrl,
-                        apiKey = cfg.apiKey,
-                        connectTimeoutSec = cfg.probeTimeoutSec.toLong(),
-                        readTimeoutSec = cfg.uploadTimeoutSec.toLong(),
-                        writeTimeoutSec = cfg.uploadTimeoutSec.toLong(),
+            } catch (e: Exception) {
+                // 兜底:引擎状态流异常也必须复位 running,避免页面卡死(v1.91)
+                _uiState.update {
+                    it.copy(
+                        running = false,
+                        error = "同步异常:${e.message ?: "未知错误"}",
                     )
-                    val engine = SyncEngine(
-                        api = api,
-                        config = cfg,
-                        bodyProvider = UriFileBodyProvider(app.contentResolver),
-                        collectRepository = app.collectRepository,
-                        favoriteRepository = app.favoriteRepository,
-                    )
-                    llmEngine = engine
-                    engine.launch(viewModelScope, entries)
-                    engine.state.collect { st -> onEngineState(st) }
                 }
             }
         }
@@ -157,7 +167,8 @@ class SyncViewModel(
                 error = if (st.failedCount > 0) "有 ${st.failedCount} 项同步失败,可重试" else null,
             )
         }
-        if (st.isTerminal) {
+        // 引擎结束条件:isTerminal(有条目且全部终态)或空批次(无待同步条目)一律复位(v1.91 卡死修复)
+        if (!st.running) {
             refreshFolders()
             val failed = st.failedCount
             _uiState.update {

@@ -204,62 +204,7 @@ fun SettingsScreen(
                     return@Column
                 }
 
-                // ===== 服务器地址 =====
-                OutlinedTextField(
-                    value = state.baseUrl,
-                    onValueChange = viewModel::onBaseUrlChange,
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text(stringResource(R.string.settings_server_url)) },
-                    placeholder = { Text("http://10.0.2.2:3001") },
-                    singleLine = true,
-                    supportingText = { Text(stringResource(R.string.settings_server_hint)) },
-                )
-
-                // ===== API Key =====
-                OutlinedTextField(
-                    value = state.apiKey,
-                    onValueChange = viewModel::onApiKeyChange,
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text(stringResource(R.string.settings_api_key)) },
-                    singleLine = true,
-                    visualTransformation = if (state.showApiKey) {
-                        VisualTransformation.None
-                    } else {
-                        PasswordVisualTransformation()
-                    },
-                    trailingIcon = {
-                        TextButton(onClick = viewModel::toggleShowApiKey) {
-                            Text(if (state.showApiKey) "隐藏" else "显示", style = MaterialTheme.typography.labelMedium)
-                        }
-                    },
-                )
-
-                // ===== 测试连接 =====
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    OutlinedButton(
-                        onClick = viewModel::testConnection,
-                        enabled = !state.testing && state.baseUrl.isNotBlank(),
-                    ) {
-                        if (state.testing) {
-                            CircularProgressIndicator(modifier = Modifier.width(18.dp), strokeWidth = 2.dp)
-                            Spacer(Modifier.width(8.dp))
-                        }
-                        Text(if (state.testing) "测试中…" else "测试连接")
-                    }
-                    state.testResult?.let { result ->
-                        TestResultBadge(result)
-                    }
-                }
-
-                state.error?.let {
-                    Text(it, color = MaterialTheme.colorScheme.error)
-                }
-
-                // ===== v1.9 板块2:默认操作(收藏夹体系替代 v1.7 零决策) =====
+                // ===== v1.91 板块1:默认操作(置顶) =====
                 ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                     Column(
                         Modifier.padding(12.dp),
@@ -309,6 +254,78 @@ fun SettingsScreen(
                             checked = state.wifiAutoSync,
                             onChange = viewModel::onWifiAutoSyncChange,
                         )
+                    }
+                }
+
+                // ===== v1.91 板块2:AnythingLLM 服务器(卡片背景+标题) =====
+                ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text(
+                            stringResource(R.string.settings_llm_section),
+                            style = MaterialTheme.typography.titleMedium,
+                        )
+                        Text(
+                            stringResource(R.string.settings_llm_section_sub),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        // ===== 服务器地址 =====
+                        OutlinedTextField(
+                            value = state.baseUrl,
+                            onValueChange = viewModel::onBaseUrlChange,
+                            modifier = Modifier.fillMaxWidth(),
+                            label = { Text(stringResource(R.string.settings_server_url)) },
+                            placeholder = { Text("http://10.0.2.2:3001") },
+                            singleLine = true,
+                            supportingText = { Text(stringResource(R.string.settings_server_hint)) },
+                        )
+
+                        // ===== API Key =====
+                        OutlinedTextField(
+                            value = state.apiKey,
+                            onValueChange = viewModel::onApiKeyChange,
+                            modifier = Modifier.fillMaxWidth(),
+                            label = { Text(stringResource(R.string.settings_api_key)) },
+                            singleLine = true,
+                            visualTransformation = if (state.showApiKey) {
+                                VisualTransformation.None
+                            } else {
+                                PasswordVisualTransformation()
+                            },
+                            trailingIcon = {
+                                TextButton(onClick = viewModel::toggleShowApiKey) {
+                                    Text(if (state.showApiKey) "隐藏" else "显示", style = MaterialTheme.typography.labelMedium)
+                                }
+                            },
+                        )
+
+                        // ===== 测试连接 =====
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            OutlinedButton(
+                                onClick = viewModel::testConnection,
+                                enabled = !state.testing && state.baseUrl.isNotBlank(),
+                            ) {
+                                if (state.testing) {
+                                    CircularProgressIndicator(modifier = Modifier.width(18.dp), strokeWidth = 2.dp)
+                                    Spacer(Modifier.width(8.dp))
+                                }
+                                Text(if (state.testing) "测试中…" else "测试连接")
+                            }
+                            state.testResult?.let { result ->
+                                TestResultBadge(result)
+                            }
+                        }
+
+                        state.error?.let {
+                            Text(it, color = MaterialTheme.colorScheme.error)
+                        }
                     }
                 }
 

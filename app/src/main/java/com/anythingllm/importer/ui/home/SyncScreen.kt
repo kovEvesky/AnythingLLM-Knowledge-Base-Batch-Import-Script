@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -23,7 +24,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -31,6 +31,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -73,17 +74,38 @@ fun SyncScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-        // 双子选项卡
-        TabRow(selectedTabIndex = if (state.channel == SyncChannel.FTP) 0 else 1) {
+        // 双子选项卡(v1.91:FTP/AnythingLLM 选中背景不同色区分)
+        val ftpBg = if (state.channel == SyncChannel.FTP) Color(0xFF14B8A6) else Color(0xFFF1F5F9)
+        val llmBg = if (state.channel == SyncChannel.ANY) Color(0xFF6366F1) else Color(0xFFF1F5F9)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(Color(0xFFF1F5F9)),
+        ) {
             Tab(
                 selected = state.channel == SyncChannel.FTP,
                 onClick = { viewModel.selectChannel(SyncChannel.FTP) },
-                text = { Text(stringResource(R.string.sync_tab_ftp)) },
+                text = {
+                    Text(
+                        stringResource(R.string.sync_tab_ftp),
+                        color = if (state.channel == SyncChannel.FTP) Color.White
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                },
+                modifier = Modifier.weight(1f).background(ftpBg, RoundedCornerShape(12.dp)),
             )
             Tab(
                 selected = state.channel == SyncChannel.ANY,
                 onClick = { viewModel.selectChannel(SyncChannel.ANY) },
-                text = { Text(stringResource(R.string.sync_tab_llm)) },
+                text = {
+                    Text(
+                        stringResource(R.string.sync_tab_llm),
+                        color = if (state.channel == SyncChannel.ANY) Color.White
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                },
+                modifier = Modifier.weight(1f).background(llmBg, RoundedCornerShape(12.dp)),
             )
         }
 

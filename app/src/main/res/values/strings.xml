@@ -219,6 +219,8 @@
 
     <!-- 设置 -->
     <string name="settings_server_url">服务器地址 (baseUrl)</string>
+    <string name="settings_llm_section">AnythingLLM 服务器</string>
+    <string name="settings_llm_section_sub">同步通道:链接/文件自动上传到服务器对应收藏夹文件夹与工作区</string>
     <string name="settings_server_hint">模拟器用 10.0.2.2 访问宿主机;真机填局域网 IP</string>
     <string name="settings_api_key">API Key</string>
     <string name="settings_show">显示</string>
@@ -309,6 +311,8 @@
 
     <!-- Mark 流式收件箱 -->
     <string name="mark_swipe_hint">左滑删除 · 右滑归类 · 灰卡再滑撤销</string>
+    <string name="mark_search_hint">搜索条目</string>
+    <string name="mark_search_empty">没有匹配的条目</string>
     <string name="mark_empty">收藏流为空。\n从任意 App 分享文件/链接进来,滑一下即归类。</string>
     <string name="mark_today">今天</string>
     <string name="mark_earlier">更早</string>

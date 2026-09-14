@@ -9,6 +9,7 @@
 
 | 版本 | 日期 | 阶段 | 摘要 |
 |---|---|---|---|
+| 1.9.1 | 2026-09-14 | v1.91 四界面修复 | 四界面修复:Mark 卡片三色体系(未归入绿/已归入收藏夹色/回收站红+删除线)+顶部搜索框与加号、To 双向拖拽排序重写(实时预览+取消也提交)、Sync 卡死兜底(未配置/空批次/异常均复位)+FTP/LLM Tab 背景分色、Settings 默认操作置顶+AnythingLLM 卡片化;模拟器双向拖拽实测、FTP 未配置/空批次/LLM 真同步全部通过 |
 | 1.9.0 | 2026-09-14 | v1.9 交互重构 | 重塑为 Mark To(mt) 个人收藏流:四 Tab(Mark/To/Sync/Settings)、收藏夹唯一分类体系、流式收件箱左右滑、双通道同步、旧数据迁移、品牌更名(单测 154 全绿,端到端真实服务器通过,Release 交付) |
 | 1.7.0 | 2026-09-14 | v1.7 收件箱范式 | 信息收集类 App(Cubox/flomo/抖音收藏)交互范式落地:默认入库位置一键入箱、条目左右滑手势分拣、单击底部抽屉连续整理、接收静默+短震动;三 Tab 切换 Crossfade;单测全绿 |
 | 1.6.0 | 2026-09-14 | v1.6 Mac 服务器版 | 新增 macOS 端 FTP 服务器启动器 start-ftp-server.command(自动装依赖+二维码+权限操作提示:防火墙放行/本地网络/隔离解除),复用跨平台 ftp_server.py;README 增加 macOS 章节 |
@@ -516,3 +517,30 @@
 
 - **1.2(已规划,见《DOC/2.0需求回归/08-v1.2开发计划.md》)**:离线暂存(户外/室内 + 结构快照比对)、Android 分享入口 + 链接(服务器 upload-link 抓取)、同步模式 + 双主页;并入 07-N3(替换阶段重试)/N5(前台 Service 防杀);阶段 0–4 门制,预计 7.5–8.5 人日。
 - 1.1.x 候选(部分已并入 1.2):R11 真机回归、全拒绝时按钮显式禁用、HTTPS 收窄(networkSecurityConfig)等,详见《07-下一步开发建议.md》。
+
+---
+
+## [1.9.1] — v1.91 四界面修复(2026-09-14)
+
+> 用户四界面修复诉求(原文口径,不可改):Mark 卡片三色体系+顶部搜索加号、To 双向拖拽、Sync 不卡死+Tab 分色、Settings 板块置顶+卡片化。
+
+### Changed
+- **MarkScreen**:顶部改为「标题+搜索行」(OutlinedTextField weight(1f)+加号 IconButtonCompat,批量多选/即时导入/日志保留);新增 query 状态,过滤标题/URL/文件名(新增 mark_search_hint / mark_search_empty 文案);卡片三色体系——未归入=绿 0xFF16A34A(alpha 0.24)、已归入=收藏夹自定义色(folderColor,缺失灰 0xFF64748B)、归入回收站=红 0xFFDC2626+标题 LineThrough 删除线;红/绿为固定语义色不可自定义;MarkEntryCard/SwipeableMarkRow 增加 folderColor 参数链路;标签底色 alpha 0.28。
+- **ToScreen(拖拽重写 v2)**:根因=旧实现 onDragEnd 一次性位移换算+结束回调(含方向差异)不可靠,从上往下拖时 reorder 从未被调用(favorites.json 实测不变);重写为 previewOrder 实时预览交换(拖过一格即交换并归零 offset)+onDragEnd/onDragCancel 都提交(onDragCancel 不再丢序)+orderRef 用 mutableStateOf+LaunchedEffect 同步(避免 pointerInput 闭包捕获过期顺序);渲染顺序 displayFolders 取预览/原始。模拟器实测:从上往下(工作→第2位)与从下往上(工作→第1位)favorites.json 均实际变更。
+- **SyncViewModel**:卡死根因=无待同步条目(或异常)时引擎立即结束但 isTerminal 不成立→running 永不复位→按钮禁用+进度条卡死;onEngineState 改为 !st.running 即复位(refreshFolders+清 running+finished 提示);runSync 整体 try/catch 兜底。
+- **CollectFtpSyncEngine**:未配置 FTP 时 markAllFailed 后补 running=false(之前仅 markAllFailed 不改 running,导致"同步中 1/1"永久卡死)。
+- **SyncScreen**:移除 TabRow,自绘圆角双 Tab 胶囊(容器 0xFFF1F5F9)——FTP 选中底 0xFF14B8A6(青绿)、LLM 选中底 0xFF6366F1(靛蓝),未选中灰,文字选中白。
+- **SettingsScreen**:「默认操作」ElevatedCard(默认收藏夹/静默接收/接收震动/WiFi 自动同步)移至最前;服务器地址+API Key+测试连接+error 包进「AnythingLLM 服务器」ElevatedCard(settings_llm_section/settings_llm_section_sub);FTP 卡/高级参数卡位置不变。
+- **strings.xml**:新增 settings_llm_section、settings_llm_section_sub、mark_search_hint、mark_search_empty。
+- **版本**:versionName 1.9.1 / versionCode 8。
+
+### Verified(模拟器 anythingllm_api36,设备歧义后 -s emulator-5554)
+- To 拖拽:重写后从上往下(favorites.json: 积累0/工作1)与从下往上(工作0/积累1)均落库;旧版从上往下 favorites.json 不变(复现 bug)。
+- Mark:搜索 "e2e" 过滤出仅回收站条目;像素采样三色生效(绿(177,211,195)/橙(231,210,180)/红(212,172,177),alpha 0.24);删除线像素检测通过(y1344-1345 整行暗线 323px)。
+- Sync:FTP 未配置→"有 1 项同步失败,可重试"+按钮恢复(不再卡死);空批次→"暂无待同步条目"+按钮可用;LLM 真同步→积累"已同步"(example.com 上传成功);FTP/LLM Tab 背景分色截图确认。
+- Settings:默认操作板块置顶、AnythingLLM 服务器卡片化(标题+副标题+地址/Key/测试连接)截图确认。
+- 单测:testDebugUnitTest BUILD SUCCESSFUL(154 项)。
+
+### Notes
+- 真机 8BRX1EA7Z 本次会话期间出现在 adb devices(来源未确认,疑似用户真机),未对其安装/卸载,后续操作均 -s 指定模拟器;v1.9 遗留"真机手势复核"待办可借此机执行。
+- Release APK(v1.9.1)需另跑 assembleRelease 后归档(本次仅 Debug 验证)。

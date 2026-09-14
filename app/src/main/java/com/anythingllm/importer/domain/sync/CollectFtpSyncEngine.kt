@@ -54,6 +54,7 @@ class CollectFtpSyncEngine(
         }
         if (!config.isConfigured) {
             markAllFailed("未配置 FTP 服务器,请到设置页填写主机地址")
+            _state.update { it.copy(running = false) } // v1.91:未配置立即结束,避免页面卡死
             return
         }
         job = scope.launch {

@@ -48,6 +48,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -155,17 +156,32 @@ private fun FolderListView(
     var deleteTarget by remember { mutableStateOf<FavoriteFolder?>(null) }
     var deleteChoice by remember { mutableStateOf<String?>(null) }
 
-    // 拖动排序状态
+    // 拖动排序状态(v1.91 重写:实时预览交换,结束/取消均提交,修复"从上往下拖不生效")
     val listState = rememberLazyListState()
     var draggingId by remember { mutableStateOf<String?>(null) }
     var dragOffset by remember { mutableStateOf(0f) }
+    var previewOrder by remember { mutableStateOf<List<String>>(emptyList()) }
     val density = LocalDensity.current
-    val itemSpanPx = with(density) { (56.dp + 10.dp).toPx() }
+    val itemSpanPx = with(density) { (56.dp).toPx() }
 
     val query = state.searchQuery.trim()
     val visible = state.userFolders.filter { query.isEmpty() || it.name.contains(query, ignoreCase = true) }
     val order = visible.map { it.id }
     val trash = state.folders.firstOrNull { it.isTrash }
+    // 拖拽闭包需要读取最新顺序(pointerInput 闭包捕获首次组合,普通 val 会过期)
+    var orderRef by remember { mutableStateOf(order) }
+    LaunchedEffect(order) { orderRef = order }
+    // 渲染顺序 = 预览顺序(拖拽中实时变化);未拖拽时等于原始顺序
+    val displayOrder = if (draggingId != null && previewOrder.isNotEmpty()) previewOrder else orderRef
+    val displayFolders = displayOrder.mapNotNull { id -> visible.firstOrNull { it.id == id } }
+
+    // 提交预览排序(与原始顺序不同才落库)
+    fun commitPreview() {
+        if (previewOrder.isNotEmpty() && previewOrder != orderRef) {
+            onReorder(previewOrder.toList())
+        }
+        previewOrder = emptyList()
+    }
 
     Scaffold(snackbarHost = snackbarHost, modifier = modifier) { inner ->
         Column(Modifier.fillMaxSize().padding(inner)) {
@@ -204,7 +220,7 @@ private fun FolderListView(
                 }
             } else {
                 LazyColumn(state = listState, contentPadding = PaddingValues(bottom = 16.dp)) {
-                    itemsIndexed(visible, key = { _, f -> f.id }) { index, folder ->
+                    itemsIndexed(displayFolders, key = { _, f -> f.id }) { index, folder ->
                         val isDragging = draggingId == folder.id
                         FolderRow(
                             folder = folder,
@@ -219,26 +235,39 @@ private fun FolderListView(
                             },
                             dragModifier = Modifier.pointerInput(folder.id) {
                                 detectDragGesturesAfterLongPress(
-                                    onDragStart = { draggingId = folder.id; dragOffset = 0f },
+                                    onDragStart = {
+                                        draggingId = folder.id
+                                        dragOffset = 0f
+                                        previewOrder = orderRef.toMutableList()
+                                    },
                                     onDrag = { change, amount ->
                                         change.consume()
                                         dragOffset += amount.y
-                                    },
-                                    onDragEnd = {
-                                        val from = index
-                                        val shift = (dragOffset / itemSpanPx).roundToInt()
-                                        val target = (from + shift).coerceIn(0, visible.lastIndex)
-                                        draggingId = null
-                                        dragOffset = 0f
-                                        if (from != target) {
-                                            val newOrder = order.toMutableList().apply {
-                                                val id = removeAt(from)
-                                                add(target, id)
+                                        // 实时预览:以预览顺序计算目标位并交换
+                                        val from = previewOrder.indexOf(folder.id)
+                                        if (from >= 0) {
+                                            val shift = (dragOffset / itemSpanPx).roundToInt()
+                                            val target = (from + shift).coerceIn(0, previewOrder.lastIndex)
+                                            if (target != from) {
+                                                val newOrder = previewOrder.toMutableList()
+                                                val id = newOrder.removeAt(from)
+                                                newOrder.add(target, id)
+                                                previewOrder = newOrder
+                                                dragOffset = 0f
                                             }
-                                            onReorder(newOrder)
                                         }
                                     },
-                                    onDragCancel = { draggingId = null; dragOffset = 0f },
+                                    onDragEnd = {
+                                        commitPreview()
+                                        draggingId = null
+                                        dragOffset = 0f
+                                    },
+                                    onDragCancel = {
+                                        // 手势取消同样提交,避免顺序丢失(v1.91 修复从上往下拖)
+                                        commitPreview()
+                                        draggingId = null
+                                        dragOffset = 0f
+                                    },
                                 )
                             },
                         )

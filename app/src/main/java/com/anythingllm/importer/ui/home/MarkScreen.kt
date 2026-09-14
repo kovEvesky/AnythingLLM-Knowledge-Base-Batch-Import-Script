@@ -28,6 +28,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Inbox
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
@@ -38,6 +39,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -104,11 +106,20 @@ fun MarkScreen(
     val trashToast = context.getString(R.string.mark_trashed_toast)
     val unmarkToast = context.getString(R.string.mark_unmark_toast)
 
-    // 气泡打开的条目 id(null=关闭);多选模式与选中集
+    // 气泡打开的条目 id(null=关闭);多选模式与选中集;搜索关键词(v1.91)
     var bubbleEntryId by remember { mutableStateOf<String?>(null) }
     var multiSelect by remember { mutableStateOf(false) }
     var multiSelected by remember { mutableStateOf<Set<String>>(emptySet()) }
     var plusMenuOpen by remember { mutableStateOf(false) }
+    var query by remember { mutableStateOf("") }
+
+    val q = query.trim()
+    fun matches(e: CollectEntry): Boolean =
+        q.isEmpty() || e.displayTitle.contains(q, ignoreCase = true) ||
+            (e.url?.contains(q, ignoreCase = true) == true) ||
+            e.fileName?.contains(q, ignoreCase = true) == true
+    val filteredWhite = state.whiteEntries.filter(::matches)
+    val filteredGray = state.grayEntries.filter(::matches)
 
     val userFolders = state.userFolders
     val defaultFolder = userFolders.firstOrNull { it.id == state.defaultFolderId }
@@ -146,11 +157,38 @@ fun MarkScreen(
         modifier = modifier,
     ) { inner ->
         Column(Modifier.fillMaxSize().padding(inner)) {
-            // ===== 顶部栏:左上角"+" + 标题 Mark =====
+            // ===== 顶部栏:标题 Mark =====
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
             ) {
+                Text(
+                    stringResource(R.string.home_tab_mark),
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.weight(1f).padding(start = 8.dp),
+                )
+                if (multiSelect) {
+                    TextButton(onClick = { multiSelect = false; multiSelected = emptySet() }) {
+                        Text(stringResource(R.string.mark_batch_exit))
+                    }
+                }
+            }
+
+            // ===== 搜索行:搜索框 + 加号(与 To 页同款,v1.91) =====
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+            ) {
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = { query = it },
+                    placeholder = { Text(stringResource(R.string.mark_search_hint)) },
+                    leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f).height(52.dp),
+                    shape = RoundedCornerShape(14.dp),
+                )
+                Spacer(Modifier.width(8.dp))
                 Box {
                     IconButtonCompat(
                         onClick = { plusMenuOpen = true },
@@ -177,16 +215,6 @@ fun MarkScreen(
                         )
                     }
                 }
-                Text(
-                    stringResource(R.string.home_tab_mark),
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.weight(1f).padding(start = 8.dp),
-                )
-                if (multiSelect) {
-                    TextButton(onClick = { multiSelect = false; multiSelected = emptySet() }) {
-                        Text(stringResource(R.string.mark_batch_exit))
-                    }
-                }
             }
 
             // ===== 多选模式提示 / 手势提示条 =====
@@ -206,7 +234,7 @@ fun MarkScreen(
                 )
             }
 
-            val allEntries = state.whiteEntries + state.grayEntries
+            val allEntries = filteredWhite + filteredGray
             if (allEntries.isEmpty()) {
                 Spacer(Modifier.height(40.dp))
                 Icon(
@@ -217,7 +245,9 @@ fun MarkScreen(
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    stringResource(R.string.mark_empty),
+                    stringResource(
+                        if (q.isNotEmpty()) R.string.mark_search_empty else R.string.mark_empty,
+                    ),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp),
@@ -227,7 +257,7 @@ fun MarkScreen(
                     // 白卡段:今天/更早
                     whiteSection(
                         state = state,
-                        entries = state.whiteEntries,
+                        entries = filteredWhite,
                         multiSelect = multiSelect,
                         multiSelected = multiSelected,
                         onToggleSelect = { id ->
@@ -243,7 +273,7 @@ fun MarkScreen(
                     // 灰卡段:今天/更早
                     graySection(
                         state = state,
-                        entries = state.grayEntries,
+                        entries = filteredGray,
                         multiSelect = multiSelect,
                         multiSelected = multiSelected,
                         onToggleSelect = { id ->
@@ -352,6 +382,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.whiteSection(
                     entry = e,
                     gray = false,
                     folderName = null,
+                    folderColor = null,
                     multiSelect = multiSelect,
                     selected = e.id in multiSelected,
                     onToggle = { onToggleSelect(e.id) },
@@ -371,6 +402,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.whiteSection(
                     entry = e,
                     gray = false,
                     folderName = null,
+                    folderColor = null,
                     multiSelect = multiSelect,
                     selected = e.id in multiSelected,
                     onToggle = { onToggleSelect(e.id) },
@@ -404,6 +436,10 @@ private fun androidx.compose.foundation.lazy.LazyListScope.graySection(
         e.markFolderId?.let { id -> state.favoriteFolders.firstOrNull { it.id == id }?.name }
             ?: FavoriteRepository.TRASH_NAME
     }
+    val folderColorOf: (CollectEntry) -> Color? = { e ->
+        e.markFolderId?.let { id -> state.favoriteFolders.firstOrNull { it.id == id }?.color }
+            ?.let { c -> Color(c) }
+    }
     if (today.isNotEmpty()) {
         sectionHeader(R.string.mark_today)
         today.forEach { e ->
@@ -412,6 +448,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.graySection(
                     entry = e,
                     gray = true,
                     folderName = folderNameOf(e),
+                    folderColor = folderColorOf(e),
                     multiSelect = multiSelect,
                     selected = e.id in multiSelected,
                     onToggle = { onToggleSelect(e.id) },
@@ -435,6 +472,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.graySection(
                     entry = e,
                     gray = true,
                     folderName = folderNameOf(e),
+                    folderColor = folderColorOf(e),
                     multiSelect = multiSelect,
                     selected = e.id in multiSelected,
                     onToggle = { onToggleSelect(e.id) },
@@ -475,6 +513,7 @@ private fun SwipeableMarkRow(
     entry: CollectEntry,
     gray: Boolean,
     folderName: String?,
+    folderColor: Color?,
     multiSelect: Boolean,
     selected: Boolean,
     onToggle: () -> Unit,
@@ -532,6 +571,7 @@ private fun SwipeableMarkRow(
             entry = entry,
             gray = gray,
             folderName = folderName,
+            folderColor = folderColor,
             multiSelect = multiSelect,
             selected = selected,
             onToggle = onToggle,
@@ -540,19 +580,28 @@ private fun SwipeableMarkRow(
     }
 }
 
-/** 平铺卡片:类型图标 + 标题 + 副行(类型·来源·相对时间);灰卡灰底 + 右上角已归入标签;图片条目缩略图 */
+/**
+ * 平铺卡片(v1.91 颜色体系):未归入=绿 / 已归入=收藏夹配色 / 回收站=红+标题删除线;
+ * 红、绿为固定语义色,不进入自定义色板;收藏夹自定义色仅作用于已归入普通夹。
+ */
 @Composable
 private fun MarkEntryCard(
     entry: CollectEntry,
     gray: Boolean,
     folderName: String?,
+    folderColor: Color?,
     multiSelect: Boolean,
     selected: Boolean,
     onToggle: () -> Unit,
     onClick: () -> Unit,
 ) {
-    val cardBg = if (gray) Color(0xE6E7E9EE) else MaterialTheme.colorScheme.surface
-    val borderColor = if (selected) Color(0xFF14B8A6) else Color.Transparent
+    val cardColor = when {
+        entry.isTrashed -> Color(0xFFDC2626)          // 回收站:红(固定,不可自定义)
+        !gray -> Color(0xFF16A34A)                    // 未归入:绿(固定,不可自定义)
+        else -> folderColor ?: Color(0xFF64748B)      // 已归入:收藏夹配色(回收站条目在上分支已拦截)
+    }
+    val cardBg = cardColor.copy(alpha = 0.24f)
+    val borderColor = if (selected) Color(0xFF14B8A6) else cardColor
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -577,6 +626,7 @@ private fun MarkEntryCard(
                         style = MaterialTheme.typography.bodyLarge,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
+                        textDecoration = if (entry.isTrashed) androidx.compose.ui.text.style.TextDecoration.LineThrough else null,
                     )
                     Spacer(Modifier.height(2.dp))
                     Text(
@@ -596,7 +646,7 @@ private fun MarkEntryCard(
                         .align(Alignment.TopEnd)
                         .padding(6.dp)
                         .clip(RoundedCornerShape(8.dp))
-                        .background(Color(0x33FFFFFF))
+                        .background(cardColor.copy(alpha = 0.28f))
                         .padding(horizontal = 8.dp, vertical = 2.dp),
                 ) {
                     Text(
