@@ -9,6 +9,7 @@
 
 | 版本 | 日期 | 阶段 | 摘要 |
 |---|---|---|---|
+| 1.5.0 | 2026-09-14 | v1.5 分享标题化+扫码连接 | 分享链接异步抓取网页标题回填(真机验证百度"百度一下，你就知道"),PC ftp_server 终端输出 FTP 配置二维码,App FTP 设置扫码连接自动回填;单测 163 全绿,PC 端二维码实测+真机 UI 回归通过 |
 | 1.4.0 | 2026-09-13 | v1.4 UI 优化 | 26 项 UI 诊断 + NEW-01~06 补充按 §6.1 全部落地:设计系统/深色窗口/文案资源化/信息架构/首启引导;单测 144 全绿,模拟器 uiautomator 回归通过 |
 | 1.3.0 | 2026-09-11 | v1.3 开发 | 未安装 AnythingLLM 用户全程可用:资料库目录树 + FTP 同步到 PC;单测 144 全绿,模拟器端到端全链路通过(收集→归档→目录管理→FTP 同步→增量/变更重传) |
 | 1.2.0-rc | 2026-09-11 | v1.2 开发 | 真机全面回归:链接/单选/多选分享、标记、同步、SAF 导入全链路通过;extractUris 修复生效(多选单 Uri 不再崩溃);服务器回归数据已清理 |
@@ -18,6 +19,38 @@
 | 0.2.0 | 2026-09-10 | 阶段 2 | SAF 选文件与预校验 |
 | 0.1.0 | 2026-09-10 | 阶段 0–1 | 环境搭建、配置与 API 层 |
 | 0.0.1 | 2026-09-10 | 初始化 | 项目骨架与构建链路 |
+
+---
+
+## [1.5.0] — v1.5 分享标题化 + FTP 扫码连接(2026-09-14)
+
+里程碑:真机(192.168.8.170 无线调试)回归定位需求一关键时序问题并修复;PC 端二维码输出隔离 venv 实测通过;App 扫码链路真机验证入口/权限/扫码页/返回正常(真实扫码解码因需摄像头物理对准 PC 屏幕,留待用户实测)。提交线:d5ca1ce(需求一)→ 0d8085a(需求二-PC)→ 8c110bd(需求二-App)→ f999a96(需求一时序修正)。单测 163 全绿(144 基线 + LinkTitleFetcherTest 12 + FtpQrConfigTest 7)。
+
+### Added
+- **需求一 链接标题抓取**:新增 `domain/link/LinkTitleFetcher.kt`(OkHttp 短超时 connect 4s/read 5s、浏览器 UA、读响应前缀 256KB、`<title>` 正则 + HTML 实体解码 + 空白压缩 + 120 字符截断);`ShareReceiver.addLink()` 先以域名占位入库 → 守护线程异步抓取 → 成功后回填标题,失败保持域名不阻塞分享。
+- **需求一 收集箱时序修正**:分享后 `awaitTitle()`(join ≤ 6s,并行)等抓取完成再打开收集箱,修复"UI 先读域名标题且不刷新"问题;真机验证百度链接标题显示"百度一下,你就知道",知乎因反爬降级域名(预期行为)。
+- **需求二-PC 二维码**:`tools/ftp-server/ftp_server.py` 新增 `print_ftp_qr()`(qrcode 终端 ASCII 二维码 + 可选 PNG 存 root 目录;pillow 缺失时仅终端二维码),启动输出 JSON payload `{"v":1,"t":"anythingllm-ftp","host","port","user","password","root"}` 二维码,`--qr-host` 指定二维码 IP;`start-ftp-server.bat` 检测 pyftpdlib+qrcode 一起自动 pip 安装(失败给清华镜像提示)。
+- **需求二-App 扫码连接**:CameraX 1.4.1 + ZXing core 3.5.3;`ScanFtpQrActivity`(相机权限门控 → Preview+ImageAnalysis → MultiFormatReader 解码 YUV,800ms 节流 → RESULT_OK+EXTRA_RESULT 返回);`data/config/FtpQrConfig.kt`(kotlinx.serialization 校验 `t=="anythingllm-ftp"`/host 非空/port 1..65535/user 非空);设置页 FTP 卡"扫码连接"按钮,解析成功回填 主机/端口/远端根目录/用户名/密码 + Toast"已扫码填入,请点保存生效",失败 Toast"未识别到 FTP 配置二维码"。
+- 测试:LinkTitleFetcherTest 12 条(解析 + MockWebServer 抓取/重定向/404/超大页/UA)、FtpQrConfigTest 7 条(合法/非法 payload/端口边界/类型校验)。
+
+### Changed
+- `AndroidManifest.xml`:新增 CAMERA 权限 + `uses-feature camera required=false` + 注册 ScanFtpQrActivity(portrait)。
+- `app/build.gradle.kts`:versionCode=5/versionName=1.5.0。
+- `strings.xml`:新增 settings_ftp_scan/scan_ok/scan_invalid/scan_perm 等文案资源。
+
+### Fixed
+- LinkTitleFetcher:RegexOption 组合用 `setOf(IGNORE_CASE, DOT_MATCHES_ALL)`(无 `or` 运算符)、replace lambda 显式 `MatchResult` 类型。
+- ScanFtpQrActivity:PermissionGate 补 onBack 参数;`Color` 修正为 Compose `androidx.compose.ui.graphics.Color`(避免误引 android.graphics.Color)。
+- start-ftp-server.bat:if 块内 echo 去括号(未配对 `(` 导致 `". was unexpected at this time."`)。
+
+### Verified
+- 单测 163 全绿(编译 :app:testDebugUnitTest --rerun-tasks BUILD SUCCESSFUL)。
+- PC 端:隔离 venv 实测启动器自动安装 pyftpdlib+qrcode → 终端 ASCII 二维码完整输出 → FTP 服务 0.0.0.0:2121 启动。
+- 真机(192.168.8.170:39913):分享百度链接入库标题回填"百度一下,你就知道"(uiautomator 证据);FTP 设置"扫码连接"入口 → 相机权限授予 → ScanFtpQrActivity 打开("对准 PC 终端中的二维码")→ 返回正常。
+- 真机扫码解码→表单回填链路:单测覆盖解析校验;真实扫码需摄像头对准 PC 终端二维码,留待用户实测。
+
+### 裁剪/候选
+- 知乎等强反爬站点标题抓取失败降级域名(已按设计);后续可加 OpenGraph/多源降级。
 
 ---
 
