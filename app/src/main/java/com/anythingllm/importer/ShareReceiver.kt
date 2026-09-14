@@ -10,6 +10,7 @@ import com.anythingllm.importer.data.collect.CollectRepository
 import com.anythingllm.importer.data.collect.EntrySource
 import com.anythingllm.importer.data.collect.EntryType
 import com.anythingllm.importer.domain.link.LinkParser
+import com.anythingllm.importer.domain.link.LinkTitleFetcher
 import java.io.File
 import java.time.LocalDate
 import java.time.OffsetDateTime
@@ -25,6 +26,7 @@ import java.util.UUID
 class ShareReceiver : Activity() {
 
     private val parser = LinkParser()
+    private val titleFetcher = LinkTitleFetcher()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -101,9 +103,10 @@ class ShareReceiver : Activity() {
     }
 
     private fun addLink(repo: CollectRepository, url: String) {
+        val id = UUID.randomUUID().toString()
         repo.add(
             CollectEntry(
-                id = UUID.randomUUID().toString(),
+                id = id,
                 type = EntryType.LINK,
                 source = EntrySource.SHARE_LINK,
                 url = url,
@@ -111,6 +114,13 @@ class ShareReceiver : Activity() {
                 collectedAt = nowIso(),
             ),
         )
+        // v1.5-需求一:异步抓取网页 <title> 回填(失败保持域名占位,不阻塞分享流程)
+        Thread {
+            val fetched = titleFetcher.fetch(url)
+            if (fetched != null) {
+                repo.update(id) { it.copy(title = fetched) }
+            }
+        }.apply { isDaemon = true }.start()
     }
 
     /** 复制到私有目录并入库;成功返回 true(供多选计数) */
