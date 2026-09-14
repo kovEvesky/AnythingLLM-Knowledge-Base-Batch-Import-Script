@@ -91,6 +91,12 @@ dependencies {
     // v1.3 FTP 同步客户端(资料库 → PC,commons-net 纯 Java 实现)
     implementation("commons-net:commons-net:3.11.1")
 
+    // v1.5 FTP 扫码连接: CameraX 预览/分析 + ZXing 解码
+    implementation("androidx.camera:camera-camera2:1.4.1")
+    implementation("androidx.camera:camera-lifecycle:1.4.1")
+    implementation("androidx.camera:camera-view:1.4.1")
+    implementation("com.google.zxing:core:3.5.3")
+
     debugImplementation("androidx.compose.ui:ui-tooling")
 
     // 测试

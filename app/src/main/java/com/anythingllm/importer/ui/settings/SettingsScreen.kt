@@ -1,6 +1,13 @@
 package com.anythingllm.importer.ui.settings
 import com.anythingllm.importer.R
 
+import android.Manifest
+import android.app.Activity
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,6 +24,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -50,13 +58,16 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.anythingllm.importer.AnythingLLMApp
 import com.anythingllm.importer.data.config.DuplicateAction
+import com.anythingllm.importer.data.config.FtpQrConfig
 import com.anythingllm.importer.data.config.ThemeMode
 import com.anythingllm.importer.data.config.FilenamePolicy
 import com.anythingllm.importer.domain.probe.ProbeResult
+import com.anythingllm.importer.ui.ftpqr.ScanFtpQrActivity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,6 +81,39 @@ fun SettingsScreen(
         if (state.saved) {
             viewModel.consumeSaved()
             onBack()
+        }
+    }
+
+    // ===== v1.5 FTP 扫码连接 =====
+    val scanContext = LocalContext.current
+    val scanLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val text = result.data?.getStringExtra(ScanFtpQrActivity.EXTRA_RESULT)
+            val cfg = text?.let { FtpQrConfig.parse(it) }
+            if (cfg != null) {
+                viewModel.onFtpHostChange(cfg.host)
+                viewModel.onFtpPortChange(cfg.port.toString())
+                viewModel.onFtpRemoteRootChange(cfg.root)
+                viewModel.onFtpUserChange(cfg.user)
+                viewModel.onFtpPasswordChange(cfg.password)
+                Toast.makeText(scanContext, R.string.settings_ftp_scan_ok, Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(scanContext, R.string.settings_ftp_scan_invalid, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) {
+            scanLauncher.launch(Intent(scanContext, ScanFtpQrActivity::class.java))
+        } else {
+            Toast.makeText(scanContext, R.string.settings_ftp_scan_perm, Toast.LENGTH_SHORT).show()
+        }
+    }
+    fun openScanner() {
+        if (ContextCompat.checkSelfPermission(scanContext, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            scanLauncher.launch(Intent(scanContext, ScanFtpQrActivity::class.java))
+        } else {
+            permissionLauncher.launch(Manifest.permission.CAMERA)
         }
     }
 
@@ -163,7 +207,21 @@ fun SettingsScreen(
                         Modifier.padding(12.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        Text("FTP 同步(未安装 AnythingLLM 时用)", style = MaterialTheme.typography.titleMedium)
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                stringResource(R.string.settings_ftp_section),
+                                style = MaterialTheme.typography.titleMedium,
+                                modifier = Modifier.weight(1f),
+                            )
+                            OutlinedButton(onClick = ::openScanner) {
+                                Icon(Icons.Filled.QrCodeScanner, contentDescription = null, modifier = Modifier.width(18.dp))
+                                Spacer(Modifier.width(4.dp))
+                                Text(stringResource(R.string.settings_ftp_scan))
+                            }
+                        }
                         Text(
                             stringResource(R.string.settings_ftp_hint),
                             style = MaterialTheme.typography.bodySmall,

@@ -5,6 +5,9 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- v1.5 FTP 扫码连接 -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
 
     <application
         android:name=".AnythingLLMApp"
@@ -48,6 +51,12 @@
                 <data android:mimeType="application/*" />
             </intent-filter>
         </activity>
+
+        <!-- v1.5 FTP 扫码连接(相机页,无 UI 主题普通页) -->
+        <activity
+            android:name=".ui.ftpqr.ScanFtpQrActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
 
         <!-- v1.2 FR-24 前台同步服务:防杀 + 进度通知 -->
         <service

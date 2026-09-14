@@ -202,6 +202,10 @@
     <string name="settings_ftp_section">FTP 同步(未安装 AnythingLLM 时用)</string>
     <string name="settings_ftp_hint">在 PC 上运行 tools/ftp-server 脚本后,手机把「资料库」同步到 PC 目录。手机与 PC 需在同一局域网。</string>
     <string name="settings_ftp_host">FTP 主机(PC 局域网 IP)</string>
+    <string name="settings_ftp_scan">扫码连接</string>
+    <string name="settings_ftp_scan_ok">已扫码填入,请点保存生效</string>
+    <string name="settings_ftp_scan_invalid">未识别到 FTP 配置二维码</string>
+    <string name="settings_ftp_scan_perm">需要相机权限才能扫码</string>
     <string name="settings_ftp_host_placeholder">如 192.168.1.100</string>
     <string name="settings_ftp_port">端口</string>
     <string name="settings_ftp_remote">远端根目录</string>
