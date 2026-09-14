@@ -1,24 +1,28 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-AnythingLLM-Android v1.4 - PC FTP 同步服务
+AnythingLLM-Android v1.5 - PC FTP 同步服务
 =========================================
 未安装 AnythingLLM 时,手机 App 通过本脚本提供的 FTP 服务,
 把「资料库」内容同步到 PC 指定目录(目录结构镜像手机端文件夹树)。
 
-依赖: pyftpdlib (双击 start-ftp-server.bat 会自动安装;手动: pip install pyftpdlib)
+依赖: pyftpdlib + qrcode (双击 start-ftp-server.bat 会自动安装;手动: pip install pyftpdlib qrcode)
 用法:
     python ftp_server.py [--root D:\\AnySync] [--port 2121]
                          [--user sync] [--password sync123]
                          [--password-env ENV_VAR_NAME]
+                         [--qr-host 192.168.1.100]   # 二维码用 IP(默认取本机第一个局域网 IP)
 默认 root = 本脚本同级 any-sync 目录(自动创建), port=2121, user=sync, password=sync123。
 
 提示:
   - 手机与 PC 需在同一局域网;手机端填本机局域网 IP(启动时会打印)。
+  - 启动后会在终端打印「连接二维码」:手机 App「资料库 → FTP 设置 → 扫码连接」直接扫描,
+    自动填入主机/端口/账号/密码/远端根目录,无需手输。
   - Windows 防火墙需放行该端口(管理员执行示例见 README)。
   - 首次使用建议修改默认密码。
 """
 import argparse
+import json
 import os
 import socket
 import sys
@@ -50,13 +54,45 @@ def lan_ipv4_addresses():
     return sorted(a for a in addrs if not a.startswith("127."))
 
 
+def print_ftp_qr(payload, ip, out_png=None):
+    """打印二维码(终端字符 + 可选 PNG)与扫描说明。返回是否成功打印字符二维码。"""
+    try:
+        import qrcode
+    except ImportError:
+        print("[提示] 未安装 qrcode,无法输出二维码。安装: pip install qrcode")
+        return False
+    qr = qrcode.QRCode(
+        version=None,
+        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        box_size=2,
+        border=2,
+    )
+    qr.add_data(payload)
+    qr.make(fit=True)
+    print("=" * 60, flush=True)
+    print("  FTP 连接二维码(手机 App「资料库 → FTP 设置 → 扫码连接」直接扫描)", flush=True)
+    print("  二维码内容 IP: %s  (若手机不在该网段,重启加 --qr-host <IP> 指定)" % ip, flush=True)
+    print("=" * 60, flush=True)
+    qr.print_ascii(invert=True)
+    print("=" * 60, flush=True)
+    try:
+        from PIL import Image  # noqa: F401
+        png = out_png or os.path.join(os.getcwd(), "ftp-qr.png")
+        qr.make_image(fill_color="black", back_color="white").save(png)
+        print("[二维码] 已同时保存图片: %s (手机可打开图片扫描)" % png, flush=True)
+    except Exception:
+        print("[提示] 未安装 pillow,仅终端二维码可用;需要图片二维码可执行: pip install pillow", flush=True)
+    return True
+
+
 def main():
-    parser = argparse.ArgumentParser(description="AnythingLLM-Android v1.4 FTP 同步服务")
+    parser = argparse.ArgumentParser(description="AnythingLLM-Android v1.5 FTP 同步服务")
     parser.add_argument("--root", default=None, help="PC 同步目录(默认:脚本同级 any-sync)")
     parser.add_argument("--port", type=int, default=2121, help="FTP 端口(默认 2121)")
     parser.add_argument("--user", default="sync", help="FTP 用户名(默认 sync)")
     parser.add_argument("--password", default="sync123", help="FTP 密码(默认 sync123)")
     parser.add_argument("--password-env", default=None, help="从环境变量读取密码(更安全)")
+    parser.add_argument("--qr-host", default=None, help="二维码使用的主机 IP(默认取本机第一个局域网 IP)")
     args = parser.parse_args()
 
     if args.password_env:
@@ -88,7 +124,7 @@ def main():
     handler = FTPHandler
     handler.authorizer = authorizer
     handler.encoding = "utf-8"
-    handler.banner = "AnythingLLM-Android FTP Sync (v1.4)"
+    handler.banner = "AnythingLLM-Android FTP Sync (v1.5)"
 
     class LoggedHandler(handler):
         def on_connect(self):
@@ -110,7 +146,7 @@ def main():
 
     server = FTPServer(("0.0.0.0", args.port), LoggedHandler)
     print("=" * 60, flush=True)
-    print("AnythingLLM-Android v1.4 FTP 同步服务已启动", flush=True)
+    print("AnythingLLM-Android v1.5 FTP 同步服务已启动", flush=True)
     print("  本机目录 : %s" % root, flush=True)
     print("  端口     : %d" % args.port, flush=True)
     print("  账号     : %s / %s" % (args.user, "*" * len(pwd)), flush=True)
@@ -119,11 +155,32 @@ def main():
         print("    ftp://%s:%d" % (ip, args.port), flush=True)
     if not lan_ipv4_addresses():
         print("    (未检测到局域网 IP,请用 ipconfig 查看)", flush=True)
-    print("  提示: 手机端「设置 → FTP 同步」填写上述 IP/端口/账号密码,", flush=True)
-    print("        再到「资料库」页点「同步到 PC」即可上传。", flush=True)
+    print("  提示: 手机端「资料库 → FTP 设置 → 扫码连接」扫下方二维码,", flush=True)
+    print("        或手动填写上述 IP/端口/账号密码,再到「资料库」页点「同步到 PC」。", flush=True)
     print("  提示: 若手机连不上,请检查 Windows 防火墙是否放行 %d 端口。" % args.port, flush=True)
     print("  Ctrl+C 停止服务。", flush=True)
     print("=" * 60, flush=True)
+
+    # ---- v1.5:输出 FTP 连接二维码(手机 App 扫码直连) ----
+    ips = lan_ipv4_addresses()
+    qr_ip = args.qr_host or (ips[0] if ips else "")
+    if qr_ip:
+        payload = json.dumps(
+            {
+                "v": 1,
+                "t": "anythingllm-ftp",
+                "host": qr_ip,
+                "port": args.port,
+                "user": args.user,
+                "password": pwd,
+                "root": "Library",
+            },
+            ensure_ascii=False,
+        )
+        print_ftp_qr(payload, qr_ip, out_png=os.path.join(root, "ftp-qr.png"))
+    else:
+        print("[提示] 未检测到局域网 IP,跳过二维码输出;请用 --qr-host <IP> 指定后重启。", flush=True)
+
     try:
         server.serve_forever()
     except KeyboardInterrupt:
