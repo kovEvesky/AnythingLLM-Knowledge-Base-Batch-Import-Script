@@ -9,6 +9,8 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <!-- v1.5 FTP 扫码连接 -->
     <uses-permission android:name="android.permission.CAMERA" />
+    <!-- v1.9 WiFi 自动同步判定 -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 
     <application

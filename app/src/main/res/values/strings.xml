@@ -224,7 +224,7 @@
     <string name="settings_show">显示</string>
     <string name="settings_hide">隐藏</string>
     <string name="settings_ftp_section">FTP 同步(未安装 AnythingLLM 时用)</string>
-    <string name="settings_ftp_hint">在 PC 上运行 tools/ftp-server 脚本后,手机把「资料库」同步到 PC 目录。手机与 PC 需在同一局域网。</string>
+    <string name="settings_ftp_hint">在 PC 上运行 tools/ftp-server 脚本后,手机把「收藏夹」内容同步到 PC 目录。手机与 PC 需在同一局域网。</string>
     <string name="settings_ftp_host">FTP 主机(PC 局域网 IP)</string>
     <string name="settings_ftp_scan">扫码连接</string>
     <string name="settings_ftp_scan_ok">已扫码填入,请点保存生效</string>
@@ -389,4 +389,6 @@
     <string name="sync_no_config">尚未配置 FTP 或 AnythingLLM,请先到 Settings 配置</string>
     <string name="sync_done_toast">同步完成</string>
     <string name="sync_partial_toast">同步完成,有 %1$d 项失败,可重试</string>
+    <string name="sync_empty">暂无待同步条目</string>
+    <string name="sync_ready">待同步 %1$d 项</string>
 </resources>

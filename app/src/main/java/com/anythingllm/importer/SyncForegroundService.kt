@@ -83,6 +83,7 @@ class SyncForegroundService : Service() {
                 config = cfg,
                 bodyProvider = LocalFileBodyProvider(),
                 collectRepository = app.collectRepository,
+                favoriteRepository = app.favoriteRepository,
             )
             this.engine = engine
             engine.launch(scope, marked)

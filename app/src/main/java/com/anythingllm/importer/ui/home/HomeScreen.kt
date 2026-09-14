@@ -139,7 +139,7 @@ fun HomeScreen(
                     modifier = Modifier.padding(padding),
                 )
                 1 -> ToScreen(modifier = Modifier.padding(padding))
-                2 -> PlaceholderTab(stringResource(R.string.home_tab_sync), Modifier.padding(padding))
+                2 -> SyncScreen(modifier = Modifier.padding(padding))
                 else -> SettingsScreen(onBack = { tab = 0 }, embedded = true, modifier = Modifier.padding(padding))
             }
         }

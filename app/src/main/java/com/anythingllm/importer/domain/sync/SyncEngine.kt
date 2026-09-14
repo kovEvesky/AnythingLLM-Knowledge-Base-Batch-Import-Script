@@ -2,6 +2,8 @@ package com.anythingllm.importer.domain.sync
 
 import com.anythingllm.importer.data.api.AnythingLLMApi
 import com.anythingllm.importer.data.api.UploadBodyFactory
+import com.anythingllm.importer.data.api.dto.CreateFolderRequest
+import com.anythingllm.importer.data.api.dto.CreateWorkspaceRequest
 import com.anythingllm.importer.data.api.dto.UploadLinkRequest
 import com.anythingllm.importer.data.collect.CollectEntry
 import com.anythingllm.importer.data.collect.CollectRepository
@@ -9,6 +11,7 @@ import com.anythingllm.importer.data.collect.EntryStatus
 import com.anythingllm.importer.data.collect.EntryType
 import com.anythingllm.importer.data.config.AppConfig
 import com.anythingllm.importer.data.config.DuplicateAction
+import com.anythingllm.importer.data.favorite.FavoriteRepository
 import com.anythingllm.importer.domain.error.toImportErrorMessage
 import com.anythingllm.importer.domain.filename.ConvertToStorageName
 import com.anythingllm.importer.domain.import.DuplicateAnswer
@@ -63,8 +66,10 @@ data class SyncState(
 }
 
 /**
- * 一键同步执行引擎(v1.2 FR-24/25/26):
- * - 输入:已标记计划条目(MARKED;FAILED 传入可重试;EXECUTED 自动跳过=断点续传);
+ * 一键同步执行引擎(v1.2 FR-24/25/26 + v1.9 收藏夹驱动改造):
+ * - 输入:已归类灰卡条目(MARKED;FAILED 传入可重试;EXECUTED 自动跳过=断点续传);
+ * - v1.9 ensure 收藏夹:对每个 markFolderId 收藏夹自动 ensure 同名服务器文件夹 + 同名工作区(§4.9 通道 B),
+ *   工作区 slug 回填 favoriteRepository(serverWorkspaceSlug);
  * - 文件+工作区 → 复用 ImportEngine 管线(查重→上传→嵌入→轮询验证→替换重试);
  * - 文件+无工作区(同步模式) → 纯上传 `document/upload/{folder}`(重试+重复跳过);
  * - 链接 → `upload-link` 服务器抓取(并发 2),响应回填 title/location;
@@ -75,6 +80,7 @@ class SyncEngine(
     private val config: AppConfig,
     private val bodyProvider: FileBodyProvider,
     private val collectRepository: CollectRepository,
+    private val favoriteRepository: FavoriteRepository,
 ) {
 
     private val _state = MutableStateFlow(SyncState())
@@ -91,6 +97,8 @@ class SyncEngine(
         _state.value = SyncState(running = true, items = targets.map { SyncItemState(it) })
         job = scope.launch {
             try {
+                // v1.9 ensure 收藏夹 → 服务器文件夹/工作区(§4.9 通道 B)
+                ensureFolders(targets)
                 coroutineScope {
                     launch { runEngineBatch(targets) }
                     launch { runSyncAndLinkBatch(targets) }
@@ -116,6 +124,40 @@ class SyncEngine(
         }
     }
 
+    /**
+     * v1.9 ensure:对涉及的收藏夹自动建同名服务器文件夹 + 同名工作区(§4.9 通道 B;
+     * 已存在则复用;收藏夹改名/删除不联动服务器端改名/删除,防误删)。
+     * 工作区 slug 回填 favoriteRepository,供 target/链接解析。
+     */
+    private suspend fun ensureFolders(entries: List<CollectEntry>) {
+        val folderIds = entries.mapNotNull { it.markFolderId }.distinct()
+        if (folderIds.isEmpty()) return
+        val existingFolders = runCatching {
+            api.documents().localFiles?.items.orEmpty()
+                .filter { it.type == "folder" }
+                .map { it.name }
+                .toSet()
+        }.getOrDefault(emptySet())
+        val workspaces = runCatching { api.workspaces().workspaces }.getOrDefault(emptyList())
+        val wsByName = workspaces.associateBy { it.name }
+        val wsBySlug = workspaces.associateBy { it.slug }
+        folderIds.forEach { fid ->
+            val folder = favoriteRepository.folderById(fid) ?: return@forEach
+            // 文件夹:同名不存在才建
+            if (folder.name !in existingFolders) {
+                runCatching { api.createFolder(CreateFolderRequest(folder.name)) }
+            }
+            // 工作区:回填 slug > 同名工作区 > 新建同名工作区
+            val slug = folder.serverWorkspaceSlug
+                ?.takeIf { it in wsBySlug }
+                ?: wsByName[folder.name]?.slug
+                ?: runCatching { api.createWorkspace(CreateWorkspaceRequest(folder.name)).slug }.getOrNull()
+            if (slug != null && slug != folder.serverWorkspaceSlug) {
+                favoriteRepository.updateWorkspaceSlug(fid, slug)
+            }
+        }
+    }
+
     fun cancel() {
         job?.cancel()
     }
@@ -129,13 +171,14 @@ class SyncEngine(
         if (engineEntries.isEmpty()) return
 
         val targets = engineEntries.map { e ->
+            val folder = folderOf(e)
             ImportTarget(
                 uriString = e.localPath.orEmpty(),
                 displayName = e.fileName ?: e.id,
                 storageName = ConvertToStorageName.convert(e.fileName ?: e.id, config.filenamePolicy),
                 sizeBytes = e.sizeBytes,
-                folder = e.markFolder.orEmpty(),
-                workspaceSlug = e.markWorkspace.orEmpty(),
+                folder = folder?.name ?: e.markFolder.orEmpty(),
+                workspaceSlug = folder?.serverWorkspaceSlug.orEmpty(),
             )
         }
         val engine = ImportEngine(api, bodyProvider, config)
@@ -207,7 +250,7 @@ class SyncEngine(
                 update(entry, SyncItemStatus.SKIPPED, "服务器已存在同名文档,跳过")
                 return
             }
-            val folder = entry.markFolder.orEmpty()
+            val folder = folderOf(entry)?.name ?: entry.markFolder.orEmpty()
             val storageName = ConvertToStorageName.convert(entry.fileName ?: entry.id, config.filenamePolicy)
             val body = UploadBodyFactory.build(
                 metadataJson = """{"title":"${entry.fileName ?: entry.id}"}""",
@@ -245,7 +288,7 @@ class SyncEngine(
             try {
                 val request = UploadLinkRequest(
                     link = listOf(entry.url.orEmpty()),
-                    addToWorkspaces = entry.markWorkspace?.takeIf { it.isNotBlank() },
+                    addToWorkspaces = folderOf(entry)?.serverWorkspaceSlug?.takeIf { it.isNotBlank() },
                 )
                 val resp = api.uploadLink(request)
                 if (!resp.success) throw IllegalStateException(resp.error ?: "链接抓取失败")
@@ -288,14 +331,24 @@ class SyncEngine(
 
     // ===== 内部工具 =====
 
-    private fun target(entry: CollectEntry, storageName: String): ImportTarget = ImportTarget(
-        uriString = entry.localPath.orEmpty(),
-        displayName = entry.fileName ?: entry.id,
-        storageName = storageName,
-        sizeBytes = entry.sizeBytes,
-        folder = entry.markFolder.orEmpty(),
-        workspaceSlug = entry.markWorkspace.orEmpty(),
-    )
+    /** v1.9 条目 → 收藏夹(按 markFolderId,兜底按旧 markFolder 名匹配迁移夹) */
+    private fun folderOf(entry: CollectEntry) =
+        entry.markFolderId?.let { favoriteRepository.folderById(it) }
+            ?: entry.markFolder?.let { name ->
+                favoriteRepository.userFolders().firstOrNull { it.name == name }
+            }
+
+    private fun target(entry: CollectEntry, storageName: String): ImportTarget {
+        val folder = folderOf(entry)
+        return ImportTarget(
+            uriString = entry.localPath.orEmpty(),
+            displayName = entry.fileName ?: entry.id,
+            storageName = storageName,
+            sizeBytes = entry.sizeBytes,
+            folder = folder?.name ?: entry.markFolder.orEmpty(),
+            workspaceSlug = folder?.serverWorkspaceSlug.orEmpty(),
+        )
+    }
 
     private fun setRunning(entry: CollectEntry, msg: String) =
         update(entry, SyncItemStatus.RUNNING, msg)

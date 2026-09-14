@@ -31,7 +31,7 @@
 > 设计依据:`DOC/v1.9最终设计方案/MarkTo-V1.9-最终设计方案.md`(定稿,Q1–Q11 全部答复)。
 > 目标:把应用从「AnythingLLM 批量导入工具」重塑为「Mark To(mt)」——"分享即流式、滑一下即归类"的个人收藏流,
 > 配「收藏夹 → FTP / AnythingLLM 双通道同步」。未决项 A1–A8 已全部按推荐定稿,期间无需再确认。
-> 本区块随阶段推进追加;当前进度:**阶段 1(数据层)+ 阶段 2(Mark 页)+ 阶段 3(To 页/Settings/目标改造/品牌更名)完成**。
+> 本区块随阶段推进追加;当前进度:**阶段 1(数据层)+ 阶段 2(Mark 页)+ 阶段 3(To 页/Settings/目标改造/品牌更名)+ 阶段 4(Sync 页与双通道同步)完成**。
 
 ### Added(阶段 1 · 数据层)
 - **收藏夹模型**(`data/favorite/FavoriteFolder.kt`):`FavoriteFolder(id, name, color ARGB, builtin, sortOrder, createdAt, isTrash, serverWorkspaceSlug)`;
@@ -102,6 +102,34 @@
 
 ### Verified(阶段 3)
 - `compileDebugKotlin` 通过;`testDebugUnitTest` 全绿 180 项无回归(阶段 3 未新增测试类)。
+
+### Added(阶段 4 · Sync 页与双通道同步引擎)
+- **SyncScreen**(`ui/home/SyncScreen.kt`):双子 Tab「FTP→PC / AnythingLLM」+ 连接状态卡 + 「立即同步」/「WiFi 自动同步」开关;
+  收藏夹驱动状态列表:每夹一行(名称/数量/同步状态徽标),回收站行🔒不可选。
+- **SyncViewModel**(`ui/home/SyncViewModel.kt`):收藏夹 → 待同步条目映射、FTP/AnythingLLM 双通道执行编排、进度/结果状态。
+- **CollectFtpSyncEngine**(`domain/ftp/`):FTP 上传通道重写为收藏夹驱动——按收藏夹名在 FTP 建目录,条目副本+JSONL 元数据上传;
+  与 CollectSyncEngine(AnythingLLM 通道)共用收藏夹映射,回收站条目不入同步队列。
+- **CollectFtpNaming**:FTP 侧命名规则(收藏夹目录 / 条目存储名),与服务器侧 ensure 文件夹同名,双通道路径一致。
+- **SyncEngine 收藏夹驱动改造**:AnythingLLM 通道按收藏夹 ensure 服务器文件夹+同名工作区(实现 A2/A4:同步时自动创建,不再依赖预建文件夹);
+  EXECUTED 条目回写 serverLocation;MARKED/TRASHED 不上传。
+- **WiFi 自动同步**(`wifiAutoSync` 配置 + ConnectivityManager 监听):连接 WiFi 且已配置通道时自动触发同步;仅同步 MARKED 条目。
+- **死代码清理**:删除 `snapshot`、`library`(资料库 Tab)、旧 `FtpSyncEngine`、`MarkPlan`、v1.3 资料库条目与目录树等遗留组件/资源(引用零残留,见 DOC 6.0 记录)。
+- **测试**:新增 FTP 命名/映射/同步过滤等用例,`testDebugUnitTest` 全绿 **154 项**(阶段 3 后按需移除已删组件测试)。
+
+### Changed(阶段 4)
+- `settings_ftp_hint` 旧文案「资料库」→「收藏夹」(模拟器冒烟发现,已修复)。
+
+### Notes(阶段 4)
+- FTP 与 AnythingLLM 通道同步顺序:先 FTP 后 AnythingLLM(各收藏夹内条目 FIFO)。
+- A2 落地验证:即时导入向导目标页 =「导入目标」页,目标收藏夹下拉预填默认夹(未设置时按气泡顺序取第一个「工作」),
+  说明文案「收藏夹是唯一目标:同步时自动在服务器创建同名文件夹与工作区」;导入失败不保留本地条目(与 v1.3 语义一致,可重试)。
+- A7(SAF 树授权)仍未实现,Android 10+ 分区存储下依赖每次 SAF 选文件授权,后续版本跟进。
+
+### Verified(阶段 4)
+- `compileDebugKotlin` 通过;`testDebugUnitTest` 全绿 154 项;模拟器冒烟 8 场景全过:
+  ①四 Tab 切换 ②Sync 双子 Tab ③收藏夹状态列表(回收站🔒) ④To 页四夹+回收站 ⑤Settings embedded(无返回键)+默认操作卡片
+  ⑥默认收藏夹下拉弹出(工作/学习/积累) ⑦即时导入向导全链路(选文件→预校验→导入目标页收藏夹预填→开始导入→失败重试 UI) ⑧Mark 页正常。
+  截图归档 `DOC/6.0V1.9实施记录/`(v19_stage4_*.png)。
 
 ---
 

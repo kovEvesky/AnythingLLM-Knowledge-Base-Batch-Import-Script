@@ -1,9 +1,12 @@
-package com.anythingllm.importer.domain.ftp
+package com.anythingllm.importer.domain.sync
 
+import com.anythingllm.importer.data.collect.CollectEntry
+import com.anythingllm.importer.data.collect.CollectRepository
+import com.anythingllm.importer.data.collect.EntryStatus
+import com.anythingllm.importer.data.collect.EntryType
 import com.anythingllm.importer.data.config.FtpConfig
-import com.anythingllm.importer.data.library.LibraryEntry
-import com.anythingllm.importer.data.library.LibraryEntryType
-import com.anythingllm.importer.data.library.LibraryRepository
+import com.anythingllm.importer.data.favorite.FavoriteRepository
+import com.anythingllm.importer.domain.ftp.CollectFtpNaming
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -21,48 +24,30 @@ import org.apache.commons.net.ftp.FTPReply
 import java.io.File
 import java.io.IOException
 
-/** FTP 同步条目状态(v1.3 FR-33) */
-enum class FtpItemStatus { PENDING, RUNNING, SUCCESS, FAILED, SKIPPED }
-
-data class FtpItemState(
-    val entry: LibraryEntry,
-    val status: FtpItemStatus = FtpItemStatus.PENDING,
-    val message: String? = null,
-)
-
-data class FtpSyncState(
-    val running: Boolean = false,
-    val items: List<FtpItemState> = emptyList(),
-) {
-    val totalCount get() = items.size
-    val doneCount
-        get() = items.count { it.status == FtpItemStatus.SUCCESS || it.status == FtpItemStatus.FAILED || it.status == FtpItemStatus.SKIPPED }
-    val successCount get() = items.count { it.status == FtpItemStatus.SUCCESS }
-    val failedCount get() = items.count { it.status == FtpItemStatus.FAILED }
-    val isTerminal get() = !running && items.isNotEmpty() && doneCount == totalCount
-}
-
 /**
- * FTP 同步引擎(v1.3 FR-33,设计《10-v1.3开发计划》§3.4):
- * - 手机端作为 FTP 客户端,把资料库内容按文件夹树上传到 PC(未安装 AnythingLLM 场景的同步通道);
- * - 被动模式 + UTF-8 控制编码 + 二进制传输;远端目录逐级创建;
- * - 增量:仅同步未同步/大小变化的条目(syncedAt/syncedSize 判定,仓储层 pendingSync);
- * - 单条目失败保留待同步状态,整批可重试;单条目内 2 次指数退避重试。
+ * 收藏夹版 FTP 同步引擎(v1.9,§4.9 通道 A):
+ * - 输入:已归类灰卡条目(排除回收站);增量判定:EXECUTED 且 serverLocation 以 "ftp://" 开头视为 FTP 已同步;
+ * - 远端目录树 = {remoteRoot}/{收藏夹名}/,逐级创建;文件副本 + 链接 .url(RFC InternetShortcut);
+ * - 幂等覆盖:同名远端文件直接覆盖(每次 FTP 同步都是最新内容);
+ * - 单条目失败保留待同步状态,整批可重试;单条目内 2 次指数退避重试;
+ * - 成功回写 EXECUTED + serverLocation="ftp://{host}:{port}/{remote}"(A4 定稿)。
  */
-class FtpSyncEngine(
+class CollectFtpSyncEngine(
     private val config: FtpConfig,
-    private val libraryRepository: LibraryRepository,
+    private val collectRepository: CollectRepository,
+    private val favoriteRepository: FavoriteRepository,
 ) {
 
-    private val _state = MutableStateFlow(FtpSyncState())
-    val state: StateFlow<FtpSyncState> = _state.asStateFlow()
+    private val _state = MutableStateFlow(SyncState())
+    val state: StateFlow<SyncState> = _state.asStateFlow()
 
     private var job: Job? = null
 
-    fun launch(scope: CoroutineScope) {
+    fun launch(scope: CoroutineScope, entries: List<CollectEntry>) {
         if (_state.value.running) return
-        val pending = libraryRepository.pendingSync()
-        _state.value = FtpSyncState(running = true, items = pending.map { FtpItemState(it) })
+        // 增量:跳过 FTP 已同步条目(跨通道互不干扰:AnythingLLM 回写的位置不以 ftp:// 开头)
+        val pending = entries.filter { !(it.status == EntryStatus.EXECUTED && it.serverLocation?.startsWith("ftp://") == true) }
+        _state.value = SyncState(running = true, items = pending.map { SyncItemState(it) })
         if (pending.isEmpty()) {
             _state.update { it.copy(running = false) }
             return
@@ -88,7 +73,7 @@ class FtpSyncEngine(
         job?.cancel()
     }
 
-    private suspend fun runSync(pending: List<LibraryEntry>) {
+    private suspend fun runSync(pending: List<CollectEntry>) {
         val client = FTPClient()
         try {
             client.connectTimeout = 10_000
@@ -117,16 +102,16 @@ class FtpSyncEngine(
         }
     }
 
-    private suspend fun runItem(client: FTPClient, entry: LibraryEntry) {
-        val name = FtpNaming.remoteFileName(entry)
-        val chain = libraryRepository.pathOf(entry.folderId)
-        val rel = FtpNaming.remoteRelativePath(chain, name)
-        val remote = "${config.remoteRoot}/$rel"
-        setRunning(entry, "上传 $rel")
-        val content = if (entry.type == LibraryEntryType.LINK) FtpNaming.buildUrlContent(entry.url.orEmpty()) else null
+    private suspend fun runItem(client: FTPClient, entry: CollectEntry) {
+        val folder = favoriteRepository.folderById(entry.markFolderId.orEmpty())
+        val dirName = folder?.name ?: entry.markFolder ?: "未分类"
+        val name = CollectFtpNaming.remoteFileName(entry)
+        val remote = "${config.remoteRoot.trimEnd('/')}/$dirName/$name"
+        setRunning(entry, "上传 ${remote.substringAfterLast('/')}")
+        val content = if (entry.type == EntryType.LINK) CollectFtpNaming.buildUrlContent(entry.url.orEmpty()) else null
         val local = entry.localPath?.let { File(it) }
-        if (entry.type == LibraryEntryType.FILE && (local == null || !local.exists())) {
-            update(entry, FtpItemStatus.FAILED, "本地文件缺失,请重新归档")
+        if (entry.type == EntryType.FILE && (local == null || !local.exists())) {
+            update(entry, SyncItemStatus.FAILED, "本地文件缺失,请重新收集")
             return
         }
         var attempt = 0
@@ -135,24 +120,35 @@ class FtpSyncEngine(
             try {
                 ensureDir(client, remote.substringBeforeLast('/'))
                 val ok = when (entry.type) {
-                    LibraryEntryType.FILE -> local!!.inputStream().use { client.storeFile(remote, it) }
-                    LibraryEntryType.LINK -> client.storeFile(remote, content!!.byteInputStream(Charsets.UTF_8))
+                    EntryType.FILE -> local!!.inputStream().use { client.storeFile(remote, it) }
+                    EntryType.LINK -> client.storeFile(remote, content!!.byteInputStream(Charsets.UTF_8))
                 }
                 if (!ok) throw IOException(client.replyString?.trim() ?: "FTP 服务器拒绝上传")
-                val size = if (entry.type == LibraryEntryType.FILE) local!!.length() else content!!.length.toLong()
-                libraryRepository.markSynced(entry.id, remote, size)
-                update(entry, FtpItemStatus.SUCCESS, "已同步")
+                val size = if (entry.type == EntryType.FILE) local!!.length() else content!!.length.toLong()
+                val location = "ftp://${config.host}:${config.port}/$remote"
+                collectRepository.update(entry.id) {
+                    it.copy(
+                        status = EntryStatus.EXECUTED,
+                        serverLocation = location,
+                        error = null,
+                        markedAt = it.markedAt,
+                    )
+                }
+                update(entry, SyncItemStatus.SUCCESS, "已同步到 PC")
                 return
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
                 if (attempt >= retryCount) {
-                    update(entry, FtpItemStatus.FAILED, e.message ?: "上传失败")
+                    collectRepository.update(entry.id) {
+                        it.copy(status = EntryStatus.FAILED, error = e.message ?: "上传失败")
+                    }
+                    update(entry, SyncItemStatus.FAILED, e.message ?: "上传失败")
                     return
                 }
                 attempt++
                 val backoff = 2000L * (1L shl (attempt - 1))
-                update(entry, FtpItemStatus.RUNNING, "上传失败,${backoff / 1000}s 后重试($attempt/$retryCount)")
+                update(entry, SyncItemStatus.RUNNING, "上传失败,${backoff / 1000}s 后重试($attempt/$retryCount)")
                 delay(backoff)
             }
         }
@@ -169,9 +165,9 @@ class FtpSyncEngine(
         }
     }
 
-    private fun setRunning(entry: LibraryEntry, msg: String) = update(entry, FtpItemStatus.RUNNING, msg)
+    private fun setRunning(entry: CollectEntry, msg: String) = update(entry, SyncItemStatus.RUNNING, msg)
 
-    private fun update(entry: LibraryEntry, status: FtpItemStatus, message: String?) {
+    private fun update(entry: CollectEntry, status: SyncItemStatus, message: String?) {
         _state.update { st ->
             val items = st.items.toMutableList()
             val idx = items.indexOfFirst { it.entry.id == entry.id }
@@ -185,8 +181,8 @@ class FtpSyncEngine(
         _state.update { st ->
             st.copy(
                 items = st.items.map {
-                    if (it.status == FtpItemStatus.PENDING || it.status == FtpItemStatus.RUNNING) {
-                        it.copy(status = FtpItemStatus.FAILED, message = message)
+                    if (it.status == SyncItemStatus.PENDING || it.status == SyncItemStatus.RUNNING) {
+                        it.copy(status = SyncItemStatus.FAILED, message = message)
                     } else it
                 },
             )
