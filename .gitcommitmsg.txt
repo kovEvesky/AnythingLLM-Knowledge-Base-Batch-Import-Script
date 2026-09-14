@@ -1,1 +1,0 @@
-v1.91 四界面修复:Mark 三色卡片+搜索加号 / To 双向拖拽重写(实时预览+取消提交) / Sync 卡死兜底(未配置+空批次)+Tab 分色 / Settings 默认操作置顶+LLM 卡片化 / versionName 1.9.1(code 8);模拟器双向拖拽+FTP未配置+空批次+LLM真同步+搜索过滤全部实测通过;CHANGELOG+试错记录入库
