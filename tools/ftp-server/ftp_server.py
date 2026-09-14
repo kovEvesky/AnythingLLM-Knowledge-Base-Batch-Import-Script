@@ -35,7 +35,13 @@ except Exception:
 
 
 def lan_ipv4_addresses():
-    """列出本机局域网 IPv4 地址(供手机端填写)。"""
+    """列出本机局域网 IPv4 地址(供手机端填写),按手机可连性优先排序。
+
+    排序优先级:192.168.x.x(家庭/办公物理局域网最常见) > 10.x.x.x >
+    172.16.0.0/12(虚拟网卡常见,如 VMware/WSL 默认段) > 其他。
+    因此默认取出的第一个 IP 通常是手机所在的物理局域网地址;
+    特殊网络可用 --qr-host 显式指定。
+    """
     addrs = set()
     try:
         # 通过 UDP 连接获取出口网卡 IP(不真正发包)
@@ -51,7 +57,17 @@ def lan_ipv4_addresses():
             addrs.add(info[4][0])
     except Exception:
         pass
-    return sorted(a for a in addrs if not a.startswith("127."))
+
+    def _priority(ip):
+        if ip.startswith("192.168."):
+            return 0
+        if ip.startswith("10."):
+            return 1
+        if ip.startswith("172."):
+            return 2
+        return 3
+
+    return sorted((a for a in addrs if not a.startswith("127.")), key=lambda a: (_priority(a), a))
 
 
 def print_ftp_qr(payload, ip, out_png=None):
@@ -71,7 +87,7 @@ def print_ftp_qr(payload, ip, out_png=None):
     qr.make(fit=True)
     print("=" * 60, flush=True)
     print("  FTP 连接二维码(手机 App「资料库 → FTP 设置 → 扫码连接」直接扫描)", flush=True)
-    print("  二维码内容 IP: %s  (若手机不在该网段,重启加 --qr-host <IP> 指定)" % ip, flush=True)
+    print("  二维码内容 IP: %s  (192.168 网段优先;手机不在该网段时重启加 --qr-host <IP> 指定)" % ip, flush=True)
     print("=" * 60, flush=True)
     qr.print_ascii(invert=True)
     print("=" * 60, flush=True)
@@ -145,15 +161,16 @@ def main():
             print("[断开] %s" % (self.remote_ip,), flush=True)
 
     server = FTPServer(("0.0.0.0", args.port), LoggedHandler)
+    ips = lan_ipv4_addresses()
     print("=" * 60, flush=True)
     print("AnythingLLM-Android v1.5 FTP 同步服务已启动", flush=True)
     print("  本机目录 : %s" % root, flush=True)
     print("  端口     : %d" % args.port, flush=True)
     print("  账号     : %s / %s" % (args.user, "*" * len(pwd)), flush=True)
-    print("  局域网 IP(手机端填):", flush=True)
-    for ip in lan_ipv4_addresses():
+    print("  局域网 IP(手机端填,按手机可连性排序,192.168 优先):", flush=True)
+    for ip in ips:
         print("    ftp://%s:%d" % (ip, args.port), flush=True)
-    if not lan_ipv4_addresses():
+    if not ips:
         print("    (未检测到局域网 IP,请用 ipconfig 查看)", flush=True)
     print("  提示: 手机端「资料库 → FTP 设置 → 扫码连接」扫下方二维码,", flush=True)
     print("        或手动填写上述 IP/端口/账号密码,再到「资料库」页点「同步到 PC」。", flush=True)
@@ -162,7 +179,6 @@ def main():
     print("=" * 60, flush=True)
 
     # ---- v1.5:输出 FTP 连接二维码(手机 App 扫码直连) ----
-    ips = lan_ipv4_addresses()
     qr_ip = args.qr_host or (ips[0] if ips else "")
     if qr_ip:
         payload = json.dumps(
