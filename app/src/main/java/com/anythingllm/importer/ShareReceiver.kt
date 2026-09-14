@@ -51,30 +51,48 @@ class ShareReceiver : Activity() {
     }
 
     private fun handleSend(intent: Intent, repo: CollectRepository) {
+        val sourceApp = sourceAppOf(intent)
         val text = intent.getStringExtra(Intent.EXTRA_TEXT)
         val links = text?.let { parser.extract(it) }.orEmpty()
         if (links.isNotEmpty()) {
-            val jobs = links.map { addLink(repo, it) }
+            val jobs = links.map { addLink(repo, it, sourceApp) }
             awaitTitle(jobs)
             maybeFeedback(links.size)
             return
         }
         val stream = extractUris(intent).firstOrNull()
-        if (stream != null && copyAndAdd(repo, stream)) maybeFeedback(1)
+        if (stream != null && copyAndAdd(repo, stream, sourceApp)) maybeFeedback(1)
     }
 
     private fun handleSendMultiple(intent: Intent, repo: CollectRepository) {
+        val sourceApp = sourceAppOf(intent)
         val text = intent.getStringExtra(Intent.EXTRA_TEXT)
         val links = text?.let { parser.extract(it) }.orEmpty()
         if (links.isNotEmpty()) {
-            val jobs = links.map { addLink(repo, it) }
+            val jobs = links.map { addLink(repo, it, sourceApp) }
             awaitTitle(jobs)
             maybeFeedback(links.size)
             return
         }
         var added = 0
-        extractUris(intent).forEach { if (copyAndAdd(repo, it)) added++ }
+        extractUris(intent).forEach { if (copyAndAdd(repo, it, sourceApp)) added++ }
         if (added > 0) maybeFeedback(added)
+    }
+
+    /**
+     * v1.9 来源 App(Q2 定稿:ClipDescription.label 尽力获取,未知兜底在 UI 层):
+     * - label 为 null/空白 → null(UI 显示"未知来源");
+     * - label 含 '/' 视为 MIME 类型(如 text/plain)而非应用名 → null;
+     * - 异常长标签视为非应用名 → null。
+     */
+    private fun sourceAppOf(intent: Intent): String? {
+        val label = intent.clipData?.description?.label?.toString()?.trim() ?: return null
+        return when {
+            label.isBlank() -> null
+            label.length > 40 -> null
+            label.contains('/') -> null
+            else -> label
+        }
     }
 
     /**
@@ -148,7 +166,7 @@ class ShareReceiver : Activity() {
     }
 
     /** 暂存链接并异步抓取标题;返回抓取线程(调用方 awaitTitle 等待) */
-    private fun addLink(repo: CollectRepository, url: String): Thread {
+    private fun addLink(repo: CollectRepository, url: String, sourceApp: String?): Thread {
         val id = UUID.randomUUID().toString()
         repo.add(
             CollectEntry(
@@ -158,6 +176,7 @@ class ShareReceiver : Activity() {
                 url = url,
                 title = parser.hostOf(url),
                 collectedAt = nowIso(),
+                sourceApp = sourceApp,
             ),
         )
         // v1.5-需求一:异步抓取网页 <title> 回填(失败保持域名占位)
@@ -170,7 +189,7 @@ class ShareReceiver : Activity() {
     }
 
     /** 复制到私有目录并入库;成功返回 true(供多选计数) */
-    private fun copyAndAdd(repo: CollectRepository, uri: Uri): Boolean {
+    private fun copyAndAdd(repo: CollectRepository, uri: Uri, sourceApp: String?): Boolean {
         var ok = false
         runCatching {
             val name = queryDisplayName(uri) ?: "share_${System.currentTimeMillis()}"
@@ -197,6 +216,7 @@ class ShareReceiver : Activity() {
                     sizeBytes = if (size > 0) size else dest.length(),
                     title = name,
                     collectedAt = nowIso(),
+                    sourceApp = sourceApp,
                 ),
             )
             ok = true

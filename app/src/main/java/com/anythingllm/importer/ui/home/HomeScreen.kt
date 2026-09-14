@@ -3,6 +3,7 @@ import com.anythingllm.importer.R
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,6 +12,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -30,13 +34,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.LibraryBooks
-import androidx.compose.material.icons.filled.CreateNewFolder
-import androidx.compose.material.icons.filled.Folder
-import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
@@ -49,10 +48,11 @@ import com.anythingllm.importer.AnythingLLMApp
 import kotlinx.coroutines.launch
 
 /**
- * 三主页(v1.2 FR-23 + v1.3):
- * 底部导航 Tab1「收集箱」(待整理条目)/ Tab2「知识库」(结构清单 + 已标记计划 + 同步入口)/
- * Tab3「资料库」(v1.3:文件夹树 + 条目管理 + FTP 同步到 PC,未安装 AnythingLLM 场景)。
- * v1.0 服务器状态/导入/设置/日志入口收拢到对应 Tab(即时导入保留为收集箱内快捷入口)。
+ * 四主页(V1.9 交互重构,最终设计 §3):
+ * 底部导航 Tab1「Mark」(流式收件箱:分享即流式 + 左右滑归类/删除)/
+ * Tab2「To」(收藏夹管理)/ Tab3「Sync」(FTP → PC / AnythingLLM 双通道同步)/
+ * Tab4「Settings」(同步设置 + 默认操作 + 高级参数)。
+ * v1.9 阶段 2:Tab0 已切换 MarkScreen;Tab1/2/3 暂为占位,后续阶段填充。
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,8 +66,6 @@ fun HomeScreen(
     var tab by remember { mutableStateOf(0) }
 
     // 每次进入主页重新读取本地仓储(分享接收/执行完成后返回可即时看到最新条目)。
-    // 修复 BUG-全面验证-01:分享发生在 app 已在前台时,ShareReceiver 压栈处理→返回仅 onResume,
-    // 仅 LaunchedEffect(Unit) 组合期一次刷新不够 → 改为每次 ON_RESUME 刷新。
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -84,9 +82,10 @@ fun HomeScreen(
                 title = {
                     Text(
                         when (tab) {
-                            0 -> stringResource(R.string.home_tab_inbox)
-                            1 -> stringResource(R.string.home_tab_knowledge)
-                            else -> stringResource(R.string.library_title)
+                            0 -> stringResource(R.string.home_tab_mark)
+                            1 -> stringResource(R.string.home_tab_to)
+                            2 -> stringResource(R.string.home_tab_sync)
+                            else -> stringResource(R.string.home_tab_settings)
                         },
                     )
                 },
@@ -97,78 +96,48 @@ fun HomeScreen(
                 NavigationBarItem(
                     selected = tab == 0,
                     onClick = { tab = 0 },
-                    icon = { Icon(Icons.Filled.Inbox, contentDescription = stringResource(R.string.home_tab_inbox)) },
-                    label = { Text(stringResource(R.string.home_tab_inbox)) },
+                    icon = { Text("M", style = MaterialTheme.typography.titleMedium) },
+                    label = { Text(stringResource(R.string.home_tab_mark)) },
                 )
                 NavigationBarItem(
                     selected = tab == 1,
                     onClick = { tab = 1 },
-                    icon = { Icon(Icons.AutoMirrored.Filled.LibraryBooks, contentDescription = stringResource(R.string.home_tab_knowledge)) },
-                    label = { Text(stringResource(R.string.home_tab_knowledge)) },
+                    icon = { Text("T", style = MaterialTheme.typography.titleMedium) },
+                    label = { Text(stringResource(R.string.home_tab_to)) },
                 )
                 NavigationBarItem(
                     selected = tab == 2,
                     onClick = { tab = 2 },
-                    icon = { Icon(Icons.Filled.Folder, contentDescription = stringResource(R.string.library_title)) },
-                    label = { Text(stringResource(R.string.library_title)) },
+                    icon = { Icon(Icons.Filled.Sync, contentDescription = null) },
+                    label = { Text(stringResource(R.string.home_tab_sync)) },
+                )
+                NavigationBarItem(
+                    selected = tab == 3,
+                    onClick = { tab = 3 },
+                    icon = { Icon(Icons.Filled.Settings, contentDescription = null) },
+                    label = { Text(stringResource(R.string.home_tab_settings)) },
                 )
             }
         },
     ) { padding ->
         Crossfade(targetState = tab, label = "homeTab") { currentTab ->
-        when (currentTab) {
-            0 -> Column(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(padding),
-            ) {
-                // 即时导入快捷入口(v1.0 流程保留)
-                Row(Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
-                    TextButton(onClick = onOpenImport) {
-                        Icon(Icons.Filled.CreateNewFolder, contentDescription = null, modifier = Modifier.width(18.dp))
-                        Spacer(Modifier.width(4.dp))
-                        Text(stringResource(R.string.home_quick_import))
-                    }
-                }
-                CollectScreen(
+            when (currentTab) {
+                0 -> MarkScreen(
                     state = state,
-                    onToggleSelect = viewModel::toggleSelected,
-                    onToggleSelectAll = viewModel::toggleSelectAll,
-                    onMark = viewModel::markSelected,
-                    onDeleteSelected = viewModel::deleteSelected,
-                    onArchiveToLibrary = viewModel::archiveSelectedToLibrary,
-                    onRefresh = viewModel::refresh,
-                    onMarkOneToDefault = viewModel::markEntryToDefault,
-                    onMarkOneToLast = viewModel::markEntryToLast,
-                    onMarkOne = viewModel::markOneEntry,
-                    onMarkAllToDefault = viewModel::markAllToDefault,
-                    onOpenSettings = onOpenSettings,
+                    onMarkToFolder = viewModel::markToFolder,
+                    onMarkEntriesToFolder = viewModel::markEntriesToFolder,
+                    onTrash = viewModel::trashEntry,
+                    onTrashEntries = viewModel::trashEntries,
+                    onRestore = viewModel::restoreEntry,
+                    onOpenImport = onOpenImport,
+                    onOpenLogs = onOpenLogs,
+                    onOpenTo = { tab = 1 },
+                    modifier = Modifier.padding(padding),
                 )
+                1 -> PlaceholderTab(stringResource(R.string.home_tab_to), Modifier.padding(padding))
+                2 -> PlaceholderTab(stringResource(R.string.home_tab_sync), Modifier.padding(padding))
+                else -> PlaceholderTab(stringResource(R.string.home_tab_settings), Modifier.padding(padding))
             }
-            1 -> KnowledgeScreen(
-                state = state,
-                onSync = viewModel::syncNow,
-                onUnmark = viewModel::unmark,
-                onDeleteEntry = viewModel::deleteEntry,
-                onOpenSettings = onOpenSettings,
-                onOpenLogs = onOpenLogs,
-                modifier = Modifier.padding(padding),
-            )
-            2 -> LibraryScreen(
-                state = state,
-                onEnterFolder = viewModel::libraryEnterFolder,
-                onGoUp = viewModel::libraryGoUp,
-                onGoRoot = viewModel::libraryGoRoot,
-                onCreateFolder = viewModel::libraryCreateFolder,
-                onRenameFolder = viewModel::libraryRenameFolder,
-                onDeleteFolder = viewModel::libraryDeleteFolder,
-                onMoveEntry = viewModel::libraryMoveEntry,
-                onDeleteEntry = viewModel::libraryDeleteEntry,
-                onSyncFtp = viewModel::syncFtpNow,
-                onOpenSettings = onOpenSettings,
-                modifier = Modifier.padding(padding),
-            )
-        }
         }
     }
 
@@ -196,5 +165,13 @@ fun HomeScreen(
                 }) { Text(stringResource(R.string.guide_confirm)) }
             },
         )
+    }
+}
+
+/** 阶段 2 占位页(阶段 3/4 填充 To/Sync/Settings) */
+@Composable
+private fun PlaceholderTab(name: String, modifier: Modifier = Modifier) {
+    Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text("$name · 开发中", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

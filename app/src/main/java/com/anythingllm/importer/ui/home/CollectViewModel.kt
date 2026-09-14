@@ -22,6 +22,8 @@ import com.anythingllm.importer.data.collect.SnapshotRepository
 import com.anythingllm.importer.data.collect.SnapshotWorkspace
 import com.anythingllm.importer.data.config.ConfigRepository
 import com.anythingllm.importer.data.config.FtpConfig
+import com.anythingllm.importer.data.favorite.FavoriteFolder
+import com.anythingllm.importer.data.favorite.FavoriteRepository
 import com.anythingllm.importer.data.library.LibraryEntry
 import com.anythingllm.importer.data.library.LibraryEntryType
 import com.anythingllm.importer.data.library.LibraryFolder
@@ -54,6 +56,7 @@ class CollectViewModel(
     private val configRepository: ConfigRepository,
     private val apiFactory: AnythingLlmClientFactory,
     private val libraryRepository: LibraryRepository,
+    private val favoriteRepository: FavoriteRepository,
 ) : ViewModel() {
 
     data class UiState(
@@ -82,6 +85,17 @@ class CollectViewModel(
         val defaultWorkspace: String = "",
         val lastMarkFolder: String = "",
         val lastMarkWorkspace: String = "",
+        // ===== v1.9 Mark To 收藏夹体系 =====
+        /** 流式列表:白卡(未标记)按 collectedAt 倒序 */
+        val whiteEntries: List<CollectEntry> = emptyList(),
+        /** 流式列表:灰卡(已整理)按 markedAt 倒序 */
+        val grayEntries: List<CollectEntry> = emptyList(),
+        /** 全部收藏夹(按 sortOrder,回收站恒最后) */
+        val favoriteFolders: List<FavoriteFolder> = emptyList(),
+        /** 用户可归入的收藏夹(气泡排序:默认夹置顶,其余按 sortOrder) */
+        val userFolders: List<FavoriteFolder> = emptyList(),
+        /** v1.9 默认收藏夹 id */
+        val defaultFolderId: String = "",
     )
 
     private val _uiState = MutableStateFlow(UiState())
@@ -99,16 +113,19 @@ class CollectViewModel(
                         defaultWorkspace = cfg.defaultWorkspace,
                         lastMarkFolder = cfg.lastMarkFolder,
                         lastMarkWorkspace = cfg.lastMarkWorkspace,
+                        defaultFolderId = cfg.defaultFolderId,
                     )
                 }
+                refresh()
             }
         }
     }
 
-    /** 从本地仓储重读(条目 + 快照 + 资料库);分享接收后/返回主页时调用 */
+    /** 从本地仓储重读(条目 + 快照 + 资料库 + 收藏夹);分享接收后/返回主页时调用 */
     fun refresh() {
         val snapshot = snapshotRepository.read()
         val all = collectRepository.all()
+        val folders = favoriteRepository.folders()
         _uiState.update {
             it.copy(
                 pendingGroups = collectRepository.groupByDay(collectRepository.pending()),
@@ -116,9 +133,22 @@ class CollectViewModel(
                 executedEntries = all.filter { e -> e.isTerminal },
                 snapshot = snapshot,
                 selectedIds = it.selectedIds intersect all.map { e -> e.id }.toSet(),
+                // v1.9 流式列表
+                whiteEntries = collectRepository.whiteCards().sortedByDescending { e -> e.collectedAt },
+                grayEntries = collectRepository.grayCards().sortedByDescending { e -> e.markedAt ?: "" },
+                favoriteFolders = folders,
+                userFolders = userFoldersSorted(folders, it.defaultFolderId),
             )
         }
         refreshLibrary()
+    }
+
+    /** 气泡排序:默认收藏夹置顶,其余按 sortOrder(A1 定稿) */
+    private fun userFoldersSorted(folders: List<FavoriteFolder>, defaultId: String): List<FavoriteFolder> {
+        val users = folders.filter { it.isUserFolder }
+        return users.sortedWith(
+            compareBy<FavoriteFolder> { it.id != defaultId }.thenBy { it.sortOrder },
+        )
     }
 
     // ===== 资料库(v1.3 FR-30/31):目录浏览与管理 =====
@@ -351,6 +381,83 @@ class CollectViewModel(
         refresh()
     }
 
+    // ===== v1.9 Mark To:流式收件箱动作 =====
+
+    private fun markTime(): String = OffsetDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+
+    /** 单条归入收藏夹(白卡标记 / 灰卡改夹);返回收藏夹 id(供 UI 提示) */
+    fun markToFolder(entryId: String, folderId: String) {
+        collectRepository.update(entryId) { e ->
+            e.copy(
+                status = EntryStatus.MARKED,
+                markFolderId = folderId,
+                markedAt = markTime(),
+                error = null,
+            )
+        }
+        refresh()
+    }
+
+    /** 批量归入收藏夹(多选模式) */
+    fun markEntriesToFolder(ids: List<String>, folderId: String) {
+        if (ids.isEmpty()) return
+        ids.forEach { id ->
+            collectRepository.update(id) { e ->
+                e.copy(
+                    status = EntryStatus.MARKED,
+                    markFolderId = folderId,
+                    markedAt = markTime(),
+                    error = null,
+                )
+            }
+        }
+        refresh()
+    }
+
+    /** 左滑删除:白卡 → 回收站(TRASHED,Q4:不参与同步,可撤销) */
+    fun trashEntry(entryId: String) {
+        collectRepository.update(entryId) { e ->
+            e.copy(
+                status = EntryStatus.TRASHED,
+                markedAt = markTime(),
+                error = null,
+            )
+        }
+        refresh()
+    }
+
+    /** 批量移入回收站(多选模式) */
+    fun trashEntries(ids: List<String>) {
+        if (ids.isEmpty()) return
+        ids.forEach { id ->
+            collectRepository.update(id) { e ->
+                e.copy(
+                    status = EntryStatus.TRASHED,
+                    markedAt = markTime(),
+                    error = null,
+                )
+            }
+        }
+        refresh()
+    }
+
+    /** 灰卡撤销(已归入/已回收):恢复 PENDING 白卡回未标记区;终态(EXECUTED/FAILED)仅允许改夹 */
+    fun restoreEntry(entryId: String) {
+        collectRepository.update(entryId) { e ->
+            if (e.isTerminal) {
+                e // 已同步到服务器的内容不可撤销(避免脏状态,A4 定稿)
+            } else {
+                e.copy(
+                    status = EntryStatus.PENDING,
+                    markFolderId = null,
+                    markedAt = null,
+                    error = null,
+                )
+            }
+        }
+        refresh()
+    }
+
     // ===== 连接刷新快照(FR-20/21) =====
 
     fun refreshSnapshot() {
@@ -498,6 +605,7 @@ class CollectViewModel(
                     configRepository = app.configRepository,
                     apiFactory = app.apiFactory,
                     libraryRepository = app.libraryRepository,
+                    favoriteRepository = app.favoriteRepository,
                 )
             } }
         }

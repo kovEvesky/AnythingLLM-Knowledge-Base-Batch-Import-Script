@@ -31,7 +31,7 @@
 > 设计依据:`DOC/v1.9最终设计方案/MarkTo-V1.9-最终设计方案.md`(定稿,Q1–Q11 全部答复)。
 > 目标:把应用从「AnythingLLM 批量导入工具」重塑为「Mark To(mt)」——"分享即流式、滑一下即归类"的个人收藏流,
 > 配「收藏夹 → FTP / AnythingLLM 双通道同步」。未决项 A1–A8 已全部按推荐定稿,期间无需再确认。
-> 本区块随阶段推进追加;当前进度:**阶段 1(数据层)完成**。
+> 本区块随阶段推进追加;当前进度:**阶段 1(数据层)+ 阶段 2(Mark 页)完成**。
 
 ### Added(阶段 1 · 数据层)
 - **收藏夹模型**(`data/favorite/FavoriteFolder.kt`):`FavoriteFolder(id, name, color ARGB, builtin, sortOrder, createdAt, isTrash, serverWorkspaceSlug)`;
@@ -54,8 +54,30 @@
 - 修复三处实现细节(FavoriteRepository 单测暴露):全非法字符名清洗残留下划线未回退;空名重命名未拒绝;
   回收站 sortOrder 用 `hashCode()%100` 可能为负导致 Int 溢出 → 固定 `Int.MAX_VALUE-1`。
 
-### Verified(阶段 1)
-- `testDebugUnitTest` 全绿:**180 项**(基线 163 + 新增 FavoriteRepository 9 + FavoriteMigration 7 + 迁移注册),无回归。
+### Added(阶段 2 · Mark 流式收件箱)
+- **四 Tab 骨架**(`HomeScreen.kt`):Mark(M 文字图标)/ To(T)/ Sync(循环箭头)/ Settings(齿轮);
+  Tab0 接入 MarkScreen,Tab1–3 暂为占位(后续阶段填充)。
+- **Mark 页**(`ui/home/MarkScreen.kt`,最终设计 §4.1–4.5):平铺列表卡片式(留白间隔、不叠加);
+  白卡在前按 `collectedAt` 倒序,灰卡在后按 `markedAt` 倒序,顶部"今天/更早"轻量分组;
+  卡片=类型图标(链接青绿底/文件蓝底)+ 标题 + 副行"类型·来源App·相对时间"+ 图片缩略图(Q9 采样解码 96px);
+  灰卡灰色半透明 + 右上角"已归入[收藏夹]"标签。
+- **手势状态机**(Q6/A1 定稿):白卡左滑=删除(TRASHED 进回收站+Snackbar);白卡右滑=两段式
+  (仅 1 个用户夹直入并提示"已存入默认收藏夹",多夹弹收藏夹气泡,0 夹引导去 To 页);
+  灰卡左滑/右滑均=撤销(双向同义,恢复 PENDING;终态 EXECUTED/FAILED 不可撤销,A4);
+  单击白卡/灰卡=弹气泡(快速归类/改夹);气泡点空白取消→保持未标记。
+- **收藏夹气泡**(`FolderBubbleSheet`):底部 ModalBottomSheet,横向胶囊(色点+名称,默认夹置顶,
+  A1 定稿:默认夹仅作排序置顶非直入条件)+ 虚线"新建…"。
+- **左上角"+"菜单**(Q7):批量多选(勾选→标记到收藏夹/移回收站)/ 即时导入 / 日志。
+- **来源 App**(Q2 定稿):`ShareReceiver.sourceAppOf()` 读 `ClipDescription.label`,
+  过滤 MIME(含'/')与超长标签,写入 `CollectEntry.sourceApp`,UI 兜底"未知来源"。
+- **配置扩展**:`defaultFolderId` 跟随 DataStore 流入 UiState,参与气泡排序。
+
+### Changed
+- 旧 CollectScreen 手势语义(v1.7 左滑=入默认箱/右滑=上次夹)整体替换为 V1.9 语义,
+  旧 CollectScreen 文件保留(阶段 3 移除知识库/资料库时清理)。
+
+### Verified(阶段 2)
+- `compileDebugKotlin` 通过(仅既有 deprecation 警告);`testDebugUnitTest` 全绿 180 项无回归。
 
 ---
 

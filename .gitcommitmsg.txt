@@ -1,1 +1,1 @@
-feat(v1.9) 阶段1数据层: 收藏夹模型+仓储+种子+迁移, CollectEntry扩展(TRASHED/markFolderId/markedAt/sourceApp), 配置扩展; 单测180全绿
+feat(v1.9) 阶段2 Mark流式收件箱: 四Tab骨架+平铺卡片+左右滑手势(白卡删/归类,灰卡双滑撤销)+收藏夹气泡+左上角加号菜单+来源App获取; 单测180全绿
