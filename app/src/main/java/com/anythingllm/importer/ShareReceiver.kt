@@ -28,6 +28,10 @@ class ShareReceiver : Activity() {
     private val parser = LinkParser()
     private val titleFetcher = LinkTitleFetcher()
 
+    companion object {
+        private const val TITLE_WAIT_MS = 6_000L
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val app = application as AnythingLLMApp
@@ -45,7 +49,8 @@ class ShareReceiver : Activity() {
         val text = intent.getStringExtra(Intent.EXTRA_TEXT)
         val links = text?.let { parser.extract(it) }.orEmpty()
         if (links.isNotEmpty()) {
-            links.forEach { addLink(repo, it) }
+            val jobs = links.map { addLink(repo, it) }
+            awaitTitle(jobs)
             openCollector()
             return
         }
@@ -57,13 +62,22 @@ class ShareReceiver : Activity() {
         val text = intent.getStringExtra(Intent.EXTRA_TEXT)
         val links = text?.let { parser.extract(it) }.orEmpty()
         if (links.isNotEmpty()) {
-            links.forEach { addLink(repo, it) }
+            val jobs = links.map { addLink(repo, it) }
+            awaitTitle(jobs)
             openCollector()
             return
         }
         var added = 0
         extractUris(intent).forEach { if (copyAndAdd(repo, it)) added++ }
         if (added > 0) openCollector()
+    }
+
+    /**
+     * 等待标题抓取线程结束(单条最长 6s,并行)。
+     * v1.5-需求一:必须等回填完成再打开收集箱,否则 UI 先读到域名标题且不再刷新。
+     */
+    private fun awaitTitle(jobs: List<Thread>) {
+        jobs.forEach { runCatching { it.join(TITLE_WAIT_MS) } }
     }
 
     /**
@@ -102,7 +116,8 @@ class ShareReceiver : Activity() {
         }
     }
 
-    private fun addLink(repo: CollectRepository, url: String) {
+    /** 暂存链接并异步抓取标题;返回抓取线程(调用方 awaitTitle 等待) */
+    private fun addLink(repo: CollectRepository, url: String): Thread {
         val id = UUID.randomUUID().toString()
         repo.add(
             CollectEntry(
@@ -114,13 +129,13 @@ class ShareReceiver : Activity() {
                 collectedAt = nowIso(),
             ),
         )
-        // v1.5-需求一:异步抓取网页 <title> 回填(失败保持域名占位,不阻塞分享流程)
-        Thread {
+        // v1.5-需求一:异步抓取网页 <title> 回填(失败保持域名占位)
+        return Thread {
             val fetched = titleFetcher.fetch(url)
             if (fetched != null) {
                 repo.update(id) { it.copy(title = fetched) }
             }
-        }.apply { isDaemon = true }.start()
+        }.apply { isDaemon = true }.also { it.start() }
     }
 
     /** 复制到私有目录并入库;成功返回 true(供多选计数) */
