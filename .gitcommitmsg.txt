@@ -1,9 +1,0 @@
-feat(v1.9) 阶段4 Sync页+双通道同步引擎(收藏夹驱动)+死代码清理
-
-- SyncScreen/SyncViewModel:双子Tab(FTP->PC/AnythingLLM)+连接状态卡+收藏夹状态列表(回收站锁)+立即同步+WiFi自动同步
-- CollectFtpSyncEngine: FTP按收藏夹建目录上传(副本+JSONL),CollectFtpNaming双通道路径一致
-- SyncEngine收藏夹驱动:ensure服务器同名文件夹+工作区(A2),EXECUTED回写serverLocation(A4),TRASHED不入队
-- wifiAutoSync: ConnectivityManager监听,WiFi下自动同步MARKED条目
-- 死代码清理:删除snapshot/library/旧FtpSyncEngine/MarkPlan及v1.3资料库组件与测试,引用零残留
-- settings_ftp_hint旧文案「资料库」改「收藏夹」
-- 单测全绿154项;模拟器冒烟8场景全过(含即时导入向导目标页收藏夹预填=A2落地验证),截图归档DOC/6.0V1.9实施记录/
