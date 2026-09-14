@@ -341,11 +341,11 @@ private fun androidx.compose.foundation.lazy.LazyListScope.whiteSection(
     unmarkToast: String,
 ) {
     if (entries.isEmpty()) return
-    sectionHeader(stringResourceId = R.string.mark_white_section, showGroup = false)
+    sectionHeader(stringResourceId = R.string.mark_white_section, showGroup = false, prefix = "white")
     val today = entries.filter { isToday(it.collectedAt) }
     val earlier = entries.filter { !isToday(it.collectedAt) }
     if (today.isNotEmpty()) {
-        sectionHeader(R.string.mark_today)
+        sectionHeader(R.string.mark_today, prefix = "white")
         today.forEach { e ->
             item(key = e.id) {
                 SwipeableMarkRow(
@@ -364,7 +364,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.whiteSection(
         }
     }
     if (earlier.isNotEmpty()) {
-        sectionHeader(R.string.mark_earlier)
+        sectionHeader(R.string.mark_earlier, prefix = "white")
         earlier.forEach { e ->
             item(key = e.id) {
                 SwipeableMarkRow(
@@ -452,12 +452,13 @@ private fun androidx.compose.foundation.lazy.LazyListScope.graySection(
     }
 }
 
-/** 分组小标题 */
+/** 分组小标题(prefix 用于区分白卡段/灰卡段同名分组,避免 LazyColumn key 冲突) */
 private fun androidx.compose.foundation.lazy.LazyListScope.sectionHeader(
     stringResourceId: Int,
     showGroup: Boolean = true,
+    prefix: String = "h",
 ) {
-    item(key = "header_$stringResourceId") {
+    item(key = "header_${prefix}_$stringResourceId") {
         Text(
             stringResource(stringResourceId),
             style = MaterialTheme.typography.labelLarge,

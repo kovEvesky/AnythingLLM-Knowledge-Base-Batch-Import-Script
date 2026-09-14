@@ -91,7 +91,7 @@ class SyncViewModel(
                         status = status,
                         detail = when (status) {
                             SyncFolderStatus.DONE -> "已同步"
-                            SyncFolderStatus.EMBEDDING -> "正在嵌入工作区"
+                            SyncFolderStatus.EMBEDDING -> "待同步 ${folderEntries.size} 项"
                             SyncFolderStatus.FAILED -> "失败可重试"
                             SyncFolderStatus.LOCKED -> "🔒 不参与同步"
                             SyncFolderStatus.PENDING -> if (folderEntries.isEmpty()) "待同步" else "待同步 ${folderEntries.size} 项"

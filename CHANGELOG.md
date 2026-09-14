@@ -31,7 +31,7 @@
 > 设计依据:`DOC/v1.9最终设计方案/MarkTo-V1.9-最终设计方案.md`(定稿,Q1–Q11 全部答复)。
 > 目标:把应用从「AnythingLLM 批量导入工具」重塑为「Mark To(mt)」——"分享即流式、滑一下即归类"的个人收藏流,
 > 配「收藏夹 → FTP / AnythingLLM 双通道同步」。未决项 A1–A8 已全部按推荐定稿,期间无需再确认。
-> 本区块随阶段推进追加;当前进度:**阶段 1(数据层)+ 阶段 2(Mark 页)+ 阶段 3(To 页/Settings/目标改造/品牌更名)+ 阶段 4(Sync 页与双通道同步)完成**。
+> 本区块随阶段推进追加;当前进度:**阶段 1–4 完成;阶段 5 进行中(单测 154 全绿、端到端真实服务器已过,待 Release 交付与真机复核)**。
 
 ### Added(阶段 1 · 数据层)
 - **收藏夹模型**(`data/favorite/FavoriteFolder.kt`):`FavoriteFolder(id, name, color ARGB, builtin, sortOrder, createdAt, isTrash, serverWorkspaceSlug)`;
@@ -130,6 +130,20 @@
   ①四 Tab 切换 ②Sync 双子 Tab ③收藏夹状态列表(回收站🔒) ④To 页四夹+回收站 ⑤Settings embedded(无返回键)+默认操作卡片
   ⑥默认收藏夹下拉弹出(工作/学习/积累) ⑦即时导入向导全链路(选文件→预校验→导入目标页收藏夹预填→开始导入→失败重试 UI) ⑧Mark 页正常。
   截图归档 `DOC/6.0V1.9实施记录/`(v19_stage4_*.png)。
+
+### Fixed(阶段 5 · 端到端回归发现)
+- **BUG-白灰同段崩溃**:Mark 页白卡段与灰卡段各自渲染同名「今天/更早」分组头,`LazyColumn` key 冲突
+  (`Key "header_2131427615" was already used`)→ 白卡+灰卡同日共存即崩溃。修复:`sectionHeader` key 加段前缀
+  (`header_white_$id` / `header_h_$id`),白/灰两段 key 空间隔离。复现:分享新链接后 Mark 页(灰卡已有)直接崩溃;修复后共存正常。
+- **Sync 页状态文案误用**:收藏夹「全部 MARKED 待同步」时聚合为 EMBEDDING 显示「正在嵌入工作区」(误导)。
+  改为「待同步 N 项」;运行中进度仍由条目列表呈现。
+
+### Verified(阶段 5 · 端到端真实服务器)
+- **AnythingLLM 真实服务器全链路(模拟器→10.0.2.2:3001→WSL 容器)**:分享 `https://example.com`(标题自动抓取 Example Domain)
+  → 静默接收 → 右滑气泡归入「工作」→ Sync AnythingLLM Tab 一键同步 → **EXECUTED** + `serverLocation=custom-documents/url-example.com_*.json` 回写;
+  **服务器自动创建「工作」文件夹**(A2 ensure 落地);回收站条目不入队;失败条目(e2e.example.com 域名不存在)显示「失败可重试」可重试。
+- 教训(流程):Settings 测试连接使用**表单临时值**,Key 未点「保存并返回」持久化时,Sync 读取旧配置会报「API Key 无效」(401 实为无 Authorization 头)。
+  测试连接成功 ≠ 已保存;改设置后必须点保存。已记入 DOC 6.0 实施记录 04。
 
 ---
 
