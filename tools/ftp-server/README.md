@@ -63,3 +63,33 @@ netsh advfirewall firewall add rule name="AnythingLLM FTP Sync" dir=in action=al
 ## 6. 停止
 
 在脚本窗口按 `Ctrl+C`。
+
+## 7. macOS 使用(新增,AnySync v1.6)
+
+`ftp_server.py` 本身跨平台,macOS 使用 `start-ftp-server.command` 双击启动(自动装依赖 + 权限提示)。
+
+### 7.1 首次启动(三步)
+
+1. **解除隔离(仅首次)**:双击 `start-ftp-server.command` 若提示『无法打开,因为无法验证开发者』,
+   右键该文件 → 打开 → 再点『打开』;或终端执行:
+   ```bash
+   chmod +x start-ftp-server.command
+   ./start-ftp-server.command
+   ```
+2. **防火墙放行(关键)**:弹出『python3 想要接受传入连接』→ 点**『允许』**(放行 FTP 2121 端口,手机才能连上)。
+   若误点『拒绝』,修复路径:系统设置 → 网络 → 防火墙 → 选项 → 找到 python3/python → 改为『允许传入连接』。
+3. **本地网络权限(macOS Sequoia 及以上)**:若弹『本地网络』权限请求 → 点『允许』。
+
+### 7.2 常见问题
+
+- **手机连不上**:
+  1) 系统设置 → 网络 → 防火墙 需为『打开』且『选项』里 python3 已允许;
+  2) 确认手机与 Mac 在同一 Wi-Fi/局域网;
+  3) 若 Mac 有多个网卡(如虚拟机/VPN 虚拟网卡),二维码默认取 192.168 物理网段,
+     手机不在该网段时用 `--qr-host` 指定: `./start-ftp-server.command --qr-host <Mac 局域网 IP>`。
+- **依赖安装失败**:手动执行 `python3 -m pip install --user pyftpdlib qrcode`(国内慢加 `-i https://pypi.tuna.tsinghua.edu.cn/simple`)。
+- **每次都在终端手动启动**:`cd tools/ftp-server && bash start-ftp-server.command`。
+
+### 7.3 手机端不变
+
+App「资料库 → FTP 设置 → 扫码连接」扫 Mac 终端二维码,或手动填 Mac 局域网 IP/2121/sync/sync123/Library。
