@@ -201,6 +201,51 @@ fun SettingsScreen(
                     Text(it, color = MaterialTheme.colorScheme.error)
                 }
 
+                // ===== v1.7 默认入库(零决策) =====
+                ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text(
+                            stringResource(R.string.settings_default_inbox_section),
+                            style = MaterialTheme.typography.titleMedium,
+                        )
+                        Text(
+                            stringResource(R.string.settings_default_inbox_sub),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        OutlinedTextField(
+                            value = state.defaultFolderName,
+                            onValueChange = viewModel::onDefaultFolderNameChange,
+                            modifier = Modifier.fillMaxWidth(),
+                            label = { Text(stringResource(R.string.settings_default_folder)) },
+                            supportingText = { Text(stringResource(R.string.settings_default_folder_hint)) },
+                            singleLine = true,
+                        )
+                        OutlinedTextField(
+                            value = state.defaultWorkspace,
+                            onValueChange = viewModel::onDefaultWorkspaceChange,
+                            modifier = Modifier.fillMaxWidth(),
+                            label = { Text(stringResource(R.string.settings_default_workspace)) },
+                            singleLine = true,
+                        )
+                        SwitchRow(
+                            title = stringResource(R.string.settings_silent_receive),
+                            subtitle = stringResource(R.string.settings_silent_receive_sub),
+                            checked = state.silentReceive,
+                            onChange = viewModel::onSilentReceiveChange,
+                        )
+                        SwitchRow(
+                            title = stringResource(R.string.settings_haptic),
+                            subtitle = stringResource(R.string.settings_haptic_sub),
+                            checked = state.hapticOnReceive,
+                            onChange = viewModel::onHapticChange,
+                        )
+                    }
+                }
+
                 // ===== FTP 同步(v1.3 FR-32:未安装 AnythingLLM 时的 PC 同步通道) =====
                 ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                     Column(

@@ -70,6 +70,12 @@ class ConfigRepository(private val context: Context) {
         val FTP_REMOTE_ROOT = stringPreferencesKey("ftp_remote_root")
         // v1.4 UI-19 首启引导
         val GUIDE_SEEN = booleanPreferencesKey("guide_seen")
+        // v1.7 收件箱范式默认值
+        val DEFAULT_FOLDER_NAME = stringPreferencesKey("default_folder_name")
+        val LAST_MARK_FOLDER = stringPreferencesKey("last_mark_folder")
+        val LAST_MARK_WORKSPACE = stringPreferencesKey("last_mark_workspace")
+        val SILENT_RECEIVE = booleanPreferencesKey("silent_receive")
+        val HAPTIC_ON_RECEIVE = booleanPreferencesKey("haptic_on_receive")
     }
 
     /** 配置流:每次 DataStore 变更/Key 解密后发射新值 */
@@ -105,6 +111,11 @@ class ConfigRepository(private val context: Context) {
                 ThemeMode.valueOf(prefs[Keys.THEME_MODE] ?: "")
             }.getOrDefault(ThemeMode.SYSTEM),
             guideSeen = prefs[Keys.GUIDE_SEEN] ?: false,
+            defaultFolderName = prefs[Keys.DEFAULT_FOLDER_NAME] ?: "",
+            lastMarkFolder = prefs[Keys.LAST_MARK_FOLDER] ?: "",
+            lastMarkWorkspace = prefs[Keys.LAST_MARK_WORKSPACE] ?: "",
+            silentReceive = prefs[Keys.SILENT_RECEIVE] ?: true,
+            hapticOnReceive = prefs[Keys.HAPTIC_ON_RECEIVE] ?: true,
             ftp = FtpConfig(
                 host = prefs[Keys.FTP_HOST] ?: "",
                 port = prefs[Keys.FTP_PORT] ?: 2121,
@@ -121,6 +132,14 @@ class ConfigRepository(private val context: Context) {
     /** UI-19:标记首启引导已看过(独立写入,不触发全量保存) */
     suspend fun markGuideSeen() {
         context.configDataStore.edit { prefs -> prefs[Keys.GUIDE_SEEN] = true }
+    }
+
+    /** v1.7 记录本次使用的标记目标(供右滑"再用一次");独立写入,不覆盖设置表单 */
+    suspend fun rememberLastMark(folder: String, workspace: String?) {
+        context.configDataStore.edit { prefs ->
+            prefs[Keys.LAST_MARK_FOLDER] = folder
+            prefs[Keys.LAST_MARK_WORKSPACE] = workspace ?: ""
+        }
     }
 
     /** 保存全部配置;apiKey 为空时不覆盖已存 Key(保存前经 normalizeApiKey 规范化) */
@@ -152,6 +171,11 @@ class ConfigRepository(private val context: Context) {
             prefs[Keys.LOG_RETENTION_DAYS] = config.logRetentionDays
             prefs[Keys.THEME_MODE] = config.themeMode.name
             prefs[Keys.GUIDE_SEEN] = config.guideSeen
+            prefs[Keys.DEFAULT_FOLDER_NAME] = config.defaultFolderName
+            prefs[Keys.LAST_MARK_FOLDER] = config.lastMarkFolder
+            prefs[Keys.LAST_MARK_WORKSPACE] = config.lastMarkWorkspace
+            prefs[Keys.SILENT_RECEIVE] = config.silentReceive
+            prefs[Keys.HAPTIC_ON_RECEIVE] = config.hapticOnReceive
             prefs[Keys.FTP_HOST] = config.ftp.host
             prefs[Keys.FTP_PORT] = config.ftp.port
             prefs[Keys.FTP_USER] = config.ftp.username

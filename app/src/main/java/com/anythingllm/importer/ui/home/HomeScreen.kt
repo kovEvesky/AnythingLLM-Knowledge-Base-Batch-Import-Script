@@ -1,6 +1,7 @@
 package com.anythingllm.importer.ui.home
 import com.anythingllm.importer.R
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -114,7 +115,8 @@ fun HomeScreen(
             }
         },
     ) { padding ->
-        when (tab) {
+        Crossfade(targetState = tab, label = "homeTab") { currentTab ->
+        when (currentTab) {
             0 -> Column(
                 Modifier
                     .fillMaxWidth()
@@ -136,6 +138,11 @@ fun HomeScreen(
                     onDeleteSelected = viewModel::deleteSelected,
                     onArchiveToLibrary = viewModel::archiveSelectedToLibrary,
                     onRefresh = viewModel::refresh,
+                    onMarkOneToDefault = viewModel::markEntryToDefault,
+                    onMarkOneToLast = viewModel::markEntryToLast,
+                    onMarkOne = viewModel::markOneEntry,
+                    onMarkAllToDefault = viewModel::markAllToDefault,
+                    onOpenSettings = onOpenSettings,
                 )
             }
             1 -> KnowledgeScreen(
@@ -161,6 +168,7 @@ fun HomeScreen(
                 onOpenSettings = onOpenSettings,
                 modifier = Modifier.padding(padding),
             )
+        }
         }
     }
 

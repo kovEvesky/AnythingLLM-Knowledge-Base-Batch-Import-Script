@@ -88,6 +88,17 @@ data class AppConfig(
     val guideSeen: Boolean = false,
     /** v1.3 FTP 同步配置(资料库 → PC,未安装 AnythingLLM 场景) */
     val ftp: FtpConfig = FtpConfig(),
+    // ===== v1.7 收件箱范式:零决策默认值 =====
+    /** v1.7 默认入库文件夹名(留空=未设置,需在整理时手选) */
+    val defaultFolderName: String = "",
+    /** v1.7 上次使用的标记文件夹(右滑"再用一次"用) */
+    val lastMarkFolder: String = "",
+    /** v1.7 上次使用的标记工作区 slug */
+    val lastMarkWorkspace: String = "",
+    /** v1.7 分享接收后不自动拉起主界面(静默入库,Toast+震动提示) */
+    val silentReceive: Boolean = true,
+    /** v1.7 接收成功时短震动反馈 */
+    val hapticOnReceive: Boolean = true,
 ) {
     companion object {
         const val DEFAULT_BASE_URL = "http://10.0.2.2:3001"

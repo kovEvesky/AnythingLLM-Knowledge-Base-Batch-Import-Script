@@ -46,6 +46,30 @@
     <string name="collect_archive_no_folder">暂无文件夹,可先选根目录,再到资料库页新建/整理</string>
     <string name="collect_archive_confirm">归档</string>
 
+    <!-- v1.7 收件箱范式 -->
+    <string name="collect_quick_default_all">全部入默认箱(%1$d)</string>
+    <string name="collect_default_setup">未设默认文件夹 · 点此设置</string>
+    <string name="collect_swipe_hint">左滑=入默认箱 · 右滑=再用上次夹 · 单击=选择文件夹</string>
+    <string name="collect_sheet_title">整理这条</string>
+    <string name="collect_sheet_recent">上次使用</string>
+    <string name="collect_sheet_go_next">入箱并看下一条</string>
+    <string name="collect_sheet_no_folder">还没有文件夹:先到「知识库」连接服务器刷新结构</string>
+    <string name="collect_archived_toast">已入箱 %1$d 条,可到「知识库」同步</string>
+    <string name="collect_undo">撤销</string>
+    <string name="collect_empty_v17">收件箱已清空。\n从任意 App 分享文件/链接进来,左滑即可快速入箱。</string>
+
+    <!-- v1.7 设置:默认入库与接收行为 -->
+    <string name="settings_default_inbox_section">默认入库(零决策)</string>
+    <string name="settings_default_inbox_sub">分享内容无需每次选择,一键入箱</string>
+    <string name="settings_default_folder">默认文件夹</string>
+    <string name="settings_default_folder_hint">留空则每次手动选择</string>
+    <string name="settings_default_workspace">默认工作区</string>
+    <string name="settings_silent_receive">静默接收</string>
+    <string name="settings_silent_receive_sub">分享后不自动打开本应用,仅提示已收到</string>
+    <string name="settings_haptic">接收震动</string>
+    <string name="settings_haptic_sub">成功收到分享时短震一下</string>
+    <string name="received_toast">已收到 %1$d 项,待整理</string>
+
     <!-- 知识库 Tab -->
     <string name="knowledge_open_settings">服务器设置</string>
     <string name="knowledge_open_logs">查看日志</string>

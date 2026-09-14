@@ -1,10 +1,15 @@
 package com.anythingllm.importer
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.provider.OpenableColumns
+import android.widget.Toast
+import com.anythingllm.importer.R
 import com.anythingllm.importer.data.collect.CollectEntry
 import com.anythingllm.importer.data.collect.CollectRepository
 import com.anythingllm.importer.data.collect.EntrySource
@@ -51,11 +56,11 @@ class ShareReceiver : Activity() {
         if (links.isNotEmpty()) {
             val jobs = links.map { addLink(repo, it) }
             awaitTitle(jobs)
-            openCollector()
+            maybeFeedback(links.size)
             return
         }
         val stream = extractUris(intent).firstOrNull()
-        if (stream != null && copyAndAdd(repo, stream)) openCollector()
+        if (stream != null && copyAndAdd(repo, stream)) maybeFeedback(1)
     }
 
     private fun handleSendMultiple(intent: Intent, repo: CollectRepository) {
@@ -64,12 +69,12 @@ class ShareReceiver : Activity() {
         if (links.isNotEmpty()) {
             val jobs = links.map { addLink(repo, it) }
             awaitTitle(jobs)
-            openCollector()
+            maybeFeedback(links.size)
             return
         }
         var added = 0
         extractUris(intent).forEach { if (copyAndAdd(repo, it)) added++ }
-        if (added > 0) openCollector()
+        if (added > 0) maybeFeedback(added)
     }
 
     /**
@@ -104,6 +109,32 @@ class ShareReceiver : Activity() {
             }
         }
         return result.toList()
+    }
+
+    /**
+     * v1.7 接收反馈:按用户配置决定"静默 Toast+震动"还是"拉起主界面"。
+     * 配置读取在后台线程(DataStore 异步),反馈/跳转在主线程。
+     */
+    private fun maybeFeedback(count: Int) {
+        val app = application as AnythingLLMApp
+        Thread {
+            val cfg = kotlinx.coroutines.runBlocking { app.configRepository.snapshot() }
+            runOnUiThread {
+                if (cfg.hapticOnReceive) haptic()
+                if (cfg.silentReceive) {
+                    Toast.makeText(applicationContext, getString(R.string.received_toast, count), Toast.LENGTH_SHORT).show()
+                } else {
+                    openCollector()
+                }
+            }
+        }.start()
+    }
+
+    private fun haptic() {
+        runCatching {
+            val v = getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator ?: return
+            v.vibrate(VibrationEffect.createOneShot(45, VibrationEffect.DEFAULT_AMPLITUDE))
+        }
     }
 
     /** 暂存成功后打开收集箱主界面,给用户可见反馈(分享方流程可返回键退回) */

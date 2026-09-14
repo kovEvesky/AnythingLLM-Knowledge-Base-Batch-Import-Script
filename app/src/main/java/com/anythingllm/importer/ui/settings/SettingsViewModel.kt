@@ -65,6 +65,12 @@ class SettingsViewModel(
         val ftpUser: String = "sync",
         val ftpPassword: String = "sync123",
         val ftpRemoteRoot: String = "Library",
+        // v1.7 收件箱范式
+        val defaultFolderName: String = "",
+        val silentReceive: Boolean = true,
+        val hapticOnReceive: Boolean = true,
+        val lastMarkFolder: String = "",
+        val lastMarkWorkspace: String = "",
         // 交互
         val loaded: Boolean = false,
         val testing: Boolean = false,
@@ -108,6 +114,11 @@ class SettingsViewModel(
                 ftpUser = cfg.ftp.username,
                 ftpPassword = cfg.ftp.password,
                 ftpRemoteRoot = cfg.ftp.remoteRoot,
+                defaultFolderName = cfg.defaultFolderName,
+                silentReceive = cfg.silentReceive,
+                hapticOnReceive = cfg.hapticOnReceive,
+                lastMarkFolder = cfg.lastMarkFolder,
+                lastMarkWorkspace = cfg.lastMarkWorkspace,
                 loaded = true,
             )
         }
@@ -143,6 +154,9 @@ class SettingsViewModel(
     fun onFtpUserChange(v: String) = _uiState.update { it.copy(ftpUser = v) }
     fun onFtpPasswordChange(v: String) = _uiState.update { it.copy(ftpPassword = v) }
     fun onFtpRemoteRootChange(v: String) = _uiState.update { it.copy(ftpRemoteRoot = v) }
+    fun onDefaultFolderNameChange(v: String) = _uiState.update { it.copy(defaultFolderName = v) }
+    fun onSilentReceiveChange(v: Boolean) = _uiState.update { it.copy(silentReceive = v) }
+    fun onHapticChange(v: Boolean) = _uiState.update { it.copy(hapticOnReceive = v) }
 
     fun consumeSaved() = _uiState.update { it.copy(saved = false) }
 
@@ -223,6 +237,11 @@ class SettingsViewModel(
             password = ftpPassword,
             remoteRoot = ftpRemoteRoot.trim().ifEmpty { "Library" },
         ),
+        defaultFolderName = defaultFolderName.trim(),
+        silentReceive = silentReceive,
+        hapticOnReceive = hapticOnReceive,
+        lastMarkFolder = lastMarkFolder,
+        lastMarkWorkspace = lastMarkWorkspace,
     )
 
     companion object {

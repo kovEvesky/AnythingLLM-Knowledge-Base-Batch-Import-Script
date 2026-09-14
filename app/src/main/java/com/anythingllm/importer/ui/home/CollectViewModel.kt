@@ -77,6 +77,11 @@ class CollectViewModel(
         val ftp: FtpConfig = FtpConfig(),
         val ftpSync: FtpSyncState = FtpSyncState(),
         val ftpSyncDone: Boolean = false,
+        // v1.7 收件箱范式:零决策默认值
+        val defaultFolderName: String = "",
+        val defaultWorkspace: String = "",
+        val lastMarkFolder: String = "",
+        val lastMarkWorkspace: String = "",
     )
 
     private val _uiState = MutableStateFlow(UiState())
@@ -87,7 +92,15 @@ class CollectViewModel(
         // v1.3:实时跟随 FTP 配置(设置页保存后资料库横幅/同步立即生效)
         viewModelScope.launch {
             configRepository.config.collect { cfg ->
-                _uiState.update { it.copy(ftp = cfg.ftp) }
+                _uiState.update {
+                    it.copy(
+                        ftp = cfg.ftp,
+                        defaultFolderName = cfg.defaultFolderName,
+                        defaultWorkspace = cfg.defaultWorkspace,
+                        lastMarkFolder = cfg.lastMarkFolder,
+                        lastMarkWorkspace = cfg.lastMarkWorkspace,
+                    )
+                }
             }
         }
     }
@@ -273,6 +286,55 @@ class CollectViewModel(
             )
         }
         refresh()
+    }
+
+    // ===== v1.7 收件箱范式:单条零决策入箱 =====
+
+    /** 单条标记到指定文件夹+工作区,并记住为"上次夹";返回是否成功 */
+    fun markOneEntry(entryId: String, folder: String, workspace: String?): Boolean {
+        if (folder.isBlank()) return false
+        collectRepository.update(entryId) { e ->
+            e.copy(status = EntryStatus.MARKED, markFolder = folder, markWorkspace = workspace)
+        }
+        viewModelScope.launch { configRepository.rememberLastMark(folder, workspace) }
+        refresh()
+        return true
+    }
+
+    /** 左滑/点按钮:单条入默认箱;默认未设置时返回 false(UI 引导去设置) */
+    fun markEntryToDefault(entryId: String): Boolean {
+        val s = _uiState.value
+        val folder = s.defaultFolderName
+        if (folder.isBlank()) return false
+        return markOneEntry(entryId, folder, s.defaultWorkspace.ifBlank { null })
+    }
+
+    /** 右滑:单条入"上次夹";上次夹未用过则回退到默认箱 */
+    fun markEntryToLast(entryId: String): Boolean {
+        val s = _uiState.value
+        val folder = s.lastMarkFolder.ifBlank { s.defaultFolderName }
+        if (folder.isBlank()) return false
+        val ws = s.lastMarkWorkspace.ifBlank { s.defaultWorkspace }
+        return markOneEntry(entryId, folder, ws.ifBlank { null })
+    }
+
+    /** 顶部"全部入默认箱";返回实际入箱条数(默认未设置返回 0) */
+    fun markAllToDefault(): Int {
+        val s = _uiState.value
+        val folder = s.defaultFolderName
+        if (folder.isBlank()) return 0
+        val ws = s.defaultWorkspace.ifBlank { null }
+        val pending = collectRepository.pending()
+        pending.forEach { e ->
+            collectRepository.update(e.id) {
+                it.copy(status = EntryStatus.MARKED, markFolder = folder, markWorkspace = ws)
+            }
+        }
+        if (pending.isNotEmpty()) {
+            viewModelScope.launch { configRepository.rememberLastMark(folder, ws) }
+        }
+        refresh()
+        return pending.size
     }
 
     // ===== 删除 =====
