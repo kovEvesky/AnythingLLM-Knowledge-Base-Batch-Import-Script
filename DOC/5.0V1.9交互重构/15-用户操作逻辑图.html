@@ -1,0 +1,235 @@
+<html style="margin:0;padding:0;">
+<div style="width:100%;box-sizing:border-box;font-family:'Microsoft YaHei',system-ui,sans-serif;background:#f5f7fa;padding:16px;color:#1f2937;">
+  <div style="font-size:20px;font-weight:700;">Mark To (mt) · V1.9 用户操作逻辑图</div>
+  <div style="font-size:13px;color:#6b7280;margin-bottom:12px;">点击上方 Tab 查看对应页面的操作流程：方框 = 屏幕显示内容，箭头标签 = 用户操作。底部导航：Mark(M) / To(T) / Sync(循环箭头) / Settings(齿轮)。默认显示「Mark · 流式」。</div>
+
+  <!-- ===== Tab 切换按钮 ===== -->
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+    <button data-panel="panel-tab1" style="flex:1 1 120px;min-height:48px;border:none;border-radius:10px;background:#0d9488;color:#fff;font-size:15px;font-weight:700;cursor:pointer;">① Mark · 流式</button>
+    <button data-panel="panel-tab2" style="flex:1 1 120px;min-height:48px;border:none;border-radius:10px;background:#e2e8f0;color:#334155;font-size:15px;font-weight:700;cursor:pointer;">② To · 收藏夹</button>
+    <button data-panel="panel-tab3" style="flex:1 1 120px;min-height:48px;border:none;border-radius:10px;background:#e2e8f0;color:#334155;font-size:15px;font-weight:700;cursor:pointer;">③ Sync · 同步</button>
+    <button data-panel="panel-tab4" style="flex:1 1 120px;min-height:48px;border:none;border-radius:10px;background:#e2e8f0;color:#334155;font-size:15px;font-weight:700;cursor:pointer;">④ Settings · 设置</button>
+  </div>
+
+  <!-- ============ 面板 1：流式收件箱 ============ -->
+  <div id="panel-tab1">
+    <div style="background:#fff;border-radius:12px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.08);">
+
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <div style="background:#e0f2f1;border:2px solid #0d9488;border-radius:8px;padding:10px 14px;">
+          <div style="font-weight:700;font-size:14px;">打开 App / 分享后返回</div>
+          <div style="font-size:13px;color:#475569;">主界面 = 流式列表</div>
+        </div>
+        <div style="font-size:16px;color:#0d9488;">→</div>
+        <div style="background:#ffffff;border:2px solid #0d9488;border-radius:8px;padding:10px 14px;flex:1 1 260px;">
+          <div style="font-weight:700;font-size:14px;">流式列表</div>
+          <div style="font-size:13px;color:#475569;margin-top:2px;">白卡(未标记)在前·时间倒序｜灰卡(已标记/已回收)在后·标记时间倒序｜顶部:今天/昨天/更早</div>
+        </div>
+      </div>
+
+      <div style="margin-top:14px;font-weight:700;font-size:14px;color:#0f766e;">▸ 白卡(未标记)操作</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">
+        <div style="flex:1 1 280px;background:#fef2f2;border-radius:8px;padding:10px;">
+          <div style="font-size:13px;font-weight:700;color:#dc2626;">左滑 = 删除</div>
+          <div style="background:#fff;border:2px solid #fca5a5;border-radius:6px;padding:8px;font-size:13px;margin-top:6px;">灰卡·回收站收藏夹(沉底)+ Snackbar"已移到回收站收藏夹"</div>
+          <div style="font-size:12px;color:#6b7280;margin-top:4px;">回收站不参与同步，仅标记与暂存(Q4)</div>
+        </div>
+        <div style="flex:1 1 340px;background:#f0fdf4;border-radius:8px;padding:10px;">
+          <div style="font-size:13px;font-weight:700;color:#16a34a;">右滑 = 归类</div>
+          <div style="background:#fff;border:2px solid #86efac;border-radius:6px;padding:8px;font-size:13px;margin-top:6px;">底部弹<strong>收藏夹气泡</strong>(工作/学习/积累/自定义·色点·常用置顶·不含回收站)</div>
+          <div style="background:#dcfce7;border:2px dashed #16a34a;border-radius:6px;padding:8px;font-size:13px;margin:6px 0 0 14px;">
+            ├ 点选某夹 → 灰卡·已归入 + 提示"已归入[夹]"<br/>
+            ├ 仅1个用户夹 → 直接归入 + 提示<strong>"已存入默认收藏夹"</strong>(Q6)<br/>
+            └ 点空白取消 → 保持白卡未标记(Q6)
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:14px;font-weight:700;font-size:14px;color:#0f766e;">▸ 灰卡(已标记/已回收)操作</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">
+        <div style="flex:1 1 300px;background:#eff6ff;border-radius:8px;padding:10px;">
+          <div style="font-size:13px;font-weight:700;color:#2563eb;">左滑 / 右滑 = 撤销标记</div>
+          <div style="background:#fff;border:2px solid #93c5fd;border-radius:6px;padding:8px;font-size:13px;margin-top:6px;">恢复白卡 → 回到未标记区(按接收时间归位)</div>
+        </div>
+        <div style="flex:1 1 300px;background:#f5f3ff;border-radius:8px;padding:10px;">
+          <div style="font-size:13px;font-weight:700;color:#7c3aed;">单击卡片 = 归类 / 改夹</div>
+          <div style="background:#fff;border:2px solid #c4b5fd;border-radius:6px;padding:8px;font-size:13px;margin-top:6px;">弹收藏夹气泡：白卡归类，灰卡改夹</div>
+        </div>
+      </div>
+
+      <div style="margin-top:14px;font-weight:700;font-size:14px;color:#0f766e;">▸ 左上角 "+"（Q7）</div>
+      <div style="background:#fff;border:2px solid #cbd5e1;border-radius:8px;padding:8px;font-size:13px;margin-top:6px;display:inline-block;">弹出菜单 → 批量多选 / 即时导入向导 / 日志页</div>
+
+    </div>
+  </div>
+
+  <!-- ============ 面板 2：收藏夹管理 ============ -->
+  <div id="panel-tab2" style="display:none;">
+    <div style="background:#fff;border-radius:12px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.08);">
+
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <div style="background:#ffffff;border:2px solid #0284c7;border-radius:8px;padding:10px 14px;">
+          <div style="font-weight:700;font-size:14px;">打开 Tab2 → 收藏夹列表</div>
+          <div style="font-size:13px;color:#475569;margin-top:2px;">顶部：<strong>搜索框 + 加号</strong>｜卡片：色点 + 名称 + 条目数<br/>默认显示：<strong>工作 / 学习 / 积累 / 回收站</strong>（回收站带锁定图标）</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;">
+        <div style="flex:1 1 200px;background:#f0f9ff;border-radius:8px;padding:10px;">
+          <div style="font-size:13px;font-weight:700;color:#0369a1;">点加号 = 新建收藏夹</div>
+          <div style="background:#fff;border:2px solid #7dd3fc;border-radius:6px;padding:8px;font-size:13px;margin-top:6px;">输入名称 + 12 色选择器 → 保存 → 列表新增卡片</div>
+        </div>
+        <div style="flex:1 1 200px;background:#f0f9ff;border-radius:8px;padding:10px;">
+          <div style="font-size:13px;font-weight:700;color:#0369a1;">长按拖动 = 排序</div>
+          <div style="background:#fff;border:2px solid #7dd3fc;border-radius:6px;padding:8px;font-size:13px;margin-top:6px;">松手落位 → sortOrder 持久化（同步影响气泡顺序与同步遍历顺序）</div>
+        </div>
+        <div style="flex:1 1 200px;background:#f0f9ff;border-radius:8px;padding:10px;">
+          <div style="font-size:13px;font-weight:700;color:#0369a1;">右滑卡片 = 重命名</div>
+          <div style="background:#fff;border:2px solid #7dd3fc;border-radius:6px;padding:8px;font-size:13px;margin-top:6px;">编辑名称 + 颜色 → 保存</div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <div style="font-size:13px;font-weight:700;color:#dc2626;">左滑卡片 = 删除收藏夹（Q5）</div>
+        <div style="background:#fef2f2;border:2px dashed #fca5a5;border-radius:8px;padding:10px;margin-top:6px;">
+          <div style="font-size:13px;">弹出<strong>迁移选择框</strong>（由用户选择条目去向）：</div>
+          <div style="font-size:13px;margin-top:4px;">├ ① 迁移入其他收藏夹 → 选择目标夹 → 条目全部移入<br/>└ ② 全部移入回收站</div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <div style="font-size:13px;font-weight:700;color:#0369a1;">点卡片 = 进入收藏夹详情</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;">
+          <div style="background:#fff;border:2px solid #7dd3fc;border-radius:6px;padding:8px;font-size:13px;flex:1 1 220px;">条目列表（时间 + 内容 + 来源）</div>
+          <div style="font-size:14px;color:#0284c7;align-self:center;">→</div>
+          <div style="background:#f0f9ff;border:2px solid #7dd3fc;border-radius:6px;padding:8px;font-size:13px;flex:1 1 220px;">点条目 → 移出(选夹) / 彻底删除</div>
+          <div style="font-size:14px;color:#0284c7;align-self:center;">→</div>
+          <div style="background:#fff1f2;border:2px solid #fda4af;border-radius:6px;padding:8px;font-size:13px;flex:1 1 220px;">回收站收藏夹 → 查看 / 清空（彻底删除文件副本）</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============ 面板 3：同步 ============ -->
+  <div id="panel-tab3" style="display:none;">
+    <div style="background:#fff;border-radius:12px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.08);">
+
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <div style="background:#ffffff;border:2px solid #d97706;border-radius:8px;padding:10px 14px;">
+          <div style="font-weight:700;font-size:14px;">打开 Tab3 → 双子选项卡</div>
+          <div style="font-size:13px;color:#475569;margin-top:2px;">[ FTP → PC ] ｜ [ AnythingLLM 本地知识库 ]</div>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;">
+        <div style="font-size:13px;font-weight:700;color:#b45309;">点"同步"</div>
+        <div style="font-size:15px;color:#d97706;">→</div>
+        <div style="background:#fef3c7;border:2px solid #f59e0b;border-radius:8px;padding:8px 12px;font-size:13px;">未配置? → 引导去设置页配置(Q2 扫码/手动)</div>
+        <div style="font-size:15px;color:#d97706;">→</div>
+        <div style="background:#ffffff;border:2px solid #d97706;border-radius:8px;padding:8px 12px;font-size:13px;">已配置 → 连接校验 → 开始同步（前台服务 + 进度通知）</div>
+      </div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;">
+        <div style="flex:1 1 300px;background:#e0f2f1;border-radius:8px;padding:10px;">
+          <div style="font-size:13px;font-weight:700;color:#0f766e;">通道A · FTP → PC</div>
+          <div style="background:#fff;border:2px solid #5eead4;border-radius:6px;padding:8px;font-size:13px;margin-top:6px;">
+            遍历收藏夹(排除回收站) → PC 建立<strong>同名目录树</strong><br/>
+            文件副本 + 链接 .url → 增量判定 / 失败重试 / 幂等覆盖
+          </div>
+        </div>
+        <div style="flex:1 1 340px;background:#e0f2fe;border-radius:8px;padding:10px;">
+          <div style="font-size:13px;font-weight:700;color:#0369a1;">通道B · AnythingLLM 本地知识库</div>
+          <div style="background:#fff;border:2px solid #7dd3fc;border-radius:6px;padding:8px;font-size:13px;margin-top:6px;">
+            对每个收藏夹(排除回收站)：<br/>
+            ① ensure 同名服务器文件夹<br/>
+            ② ensure 同名工作区<br/>
+            ③ 文件 → 上传文件夹 + <strong>默认嵌入同名工作区</strong>(Q3)<br/>
+            ④ 链接 → upload-link + 加入同名工作区<br/>
+            完成 → 回写 EXECUTED
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px;">
+        <div style="font-size:13px;font-weight:700;color:#b45309;">同步完成</div>
+        <div style="font-size:15px;color:#d97706;">→</div>
+        <div style="background:#fff;border:2px solid #fcd34d;border-radius:8px;padding:8px 12px;font-size:13px;">成功 / 失败明细 → 失败条目可重试</div>
+        <div style="font-size:13px;color:#6b7280;">＋ 可选开关：WiFi 下自动同步(Q8)</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============ 面板 4：设置 ============ -->
+  <div id="panel-tab4" style="display:none;">
+    <div style="background:#fff;border-radius:12px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.08);">
+
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <div style="background:#ffffff;border:2px solid #7c3aed;border-radius:8px;padding:10px 14px;">
+          <div style="font-weight:700;font-size:14px;">打开 Tab4 → 设置页</div>
+          <div style="font-size:13px;color:#475569;margin-top:2px;">按板块纵向排列，底部"保存并返回"</div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <div style="font-size:14px;font-weight:700;color:#7c3aed;">板块1 · 同步设置</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;">
+          <div style="flex:1 1 280px;background:#faf5ff;border:2px solid #d8b4fe;border-radius:8px;padding:10px;">
+            <div style="font-size:13px;font-weight:700;">FTP 卡</div>
+            <div style="font-size:13px;color:#4b5563;margin-top:4px;">主机 / 端口 / 远端根目录 / 账号 / 密码<br/>+ <strong>[扫码连接]</strong>（PC 端二维码自动回填）+ 手动输入</div>
+          </div>
+          <div style="flex:1 1 280px;background:#faf5ff;border:2px solid #d8b4fe;border-radius:8px;padding:10px;">
+            <div style="font-size:13px;font-weight:700;">AnythingLLM 卡</div>
+            <div style="font-size:13px;color:#4b5563;margin-top:4px;">服务地址 / API Key / <strong>[测试连接]</strong><br/>手动输入（扫码连接默认先不做）</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <div style="font-size:14px;font-weight:700;color:#7c3aed;">板块2 · 默认操作</div>
+        <div style="background:#f5f3ff;border:2px dashed #c4b5fd;border-radius:8px;padding:10px;margin-top:6px;font-size:13px;">
+          默认收藏夹（右滑"仅一夹直入"目标）｜ 接收行为：静默接收 / 接收震动 / 接收后自动打开 ｜ WiFi 自动同步开关
+          <div style="color:#6b7280;font-size:12px;margin-top:4px;">注：原消息在"板块2 默认操作,"处截断，Q1 答复内容已归入 Tab2 收藏夹管理；本板块按推荐保留，待最终确认。</div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <div style="font-size:14px;font-weight:700;color:#7c3aed;">其他</div>
+        <div style="background:#fff;border:2px solid #cbd5e1;border-radius:8px;padding:8px;font-size:13px;margin-top:6px;display:inline-block;">高级参数（折叠：超时/并发/文件名策略/重复动作/主题…）→ [保存并返回]</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div style="font-size:12px;color:#94a3b8;margin-top:12px;">示意：V1.9 交互逻辑，详细设计见《14-v1.9交互重构方案.md》</div>
+</div>
+<script>
+(function () {
+  try {
+    var btns = document.querySelectorAll('button[data-panel]');
+    var panels = {
+      'panel-tab1': document.getElementById('panel-tab1'),
+      'panel-tab2': document.getElementById('panel-tab2'),
+      'panel-tab3': document.getElementById('panel-tab3'),
+      'panel-tab4': document.getElementById('panel-tab4')
+    };
+    var activeBg = '#0d9488', activeColor = '#ffffff';
+    var idleBg = '#e2e8f0', idleColor = '#334155';
+    btns.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var key = btn.getAttribute('data-panel');
+        Object.keys(panels).forEach(function (k) {
+          if (panels[k]) panels[k].style.display = (k === key) ? 'block' : 'none';
+        });
+        btns.forEach(function (b) {
+          var on = b.getAttribute('data-panel') === key;
+          b.style.background = on ? activeBg : idleBg;
+          b.style.color = on ? activeColor : idleColor;
+        });
+      });
+    });
+  } catch (e) { /* 降级：默认面板已显示 */ }
+})();
+</script>
+</html>

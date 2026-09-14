@@ -1,0 +1,112 @@
+<html style="margin:0;padding:0;">
+<div style="width:100%;box-sizing:border-box;font-family:'Microsoft YaHei',system-ui,sans-serif;background:#f5f7fa;padding:16px;color:#1f2937;">
+  <div style="font-size:20px;font-weight:700;margin-bottom:4px;">Mark To (mt) · V1.9 交互重构总览</div>
+  <div style="font-size:13px;color:#6b7280;margin-bottom:16px;">示意：四 Tab 架构 · 收件箱手势状态机 · 收藏夹双通道同步（详见方案文档 14-v1.9交互重构方案.md）</div>
+
+  <!-- ============ 面板一：四 Tab 架构 ============ -->
+  <div style="background:#fff;border-radius:12px;padding:14px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.08);">
+    <div style="font-size:15px;font-weight:700;color:#0f766e;margin-bottom:10px;">① 四 Tab 架构（由 3 Tab 重构而来）</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <div style="flex:1 1 200px;background:#e0f2f1;border-left:4px solid #0d9488;border-radius:8px;padding:10px;">
+        <div style="font-weight:700;font-size:14px;">Tab1 · Mark 流式收件箱(M)</div>
+        <div style="font-size:12.5px;line-height:1.7;margin-top:4px;">分享即入流 · 卡片(时间/内容/来源App)<br/>白卡左滑→回收站 · 右滑→收藏夹气泡<br/>灰卡双滑=撤销 · 未标记前/已标记后<br/>左上角"+"=批量/导入/日志</div>
+      </div>
+      <div style="flex:1 1 200px;background:#e0f2fe;border-left:4px solid #0284c7;border-radius:8px;padding:10px;">
+        <div style="font-weight:700;font-size:14px;">Tab2 · To 收藏夹管理(T)</div>
+        <div style="font-size:12.5px;line-height:1.7;margin-top:4px;">唯一分类体系(名称+12色)<br/>预置:工作/学习/积累/回收站(锁定)<br/>搜索+加号 · 拖动排序 · 左删右改名</div>
+      </div>
+      <div style="flex:1 1 200px;background:#fef3c7;border-left:4px solid #d97706;border-radius:8px;padding:10px;">
+        <div style="font-weight:700;font-size:14px;">Tab3 · Sync 同步(循环箭头)</div>
+        <div style="font-size:12.5px;line-height:1.7;margin-top:4px;">子页A FTP→PC 同名目录树(文件+.url)<br/>子页B AnythingLLM 同名文件夹+同名工作区<br/>回收站不参与同步</div>
+      </div>
+      <div style="flex:1 1 200px;background:#f3e8ff;border-left:4px solid #7c3aed;border-radius:8px;padding:10px;">
+        <div style="font-weight:700;font-size:14px;">Tab4 · Settings 设置(齿轮)</div>
+        <div style="font-size:12.5px;line-height:1.7;margin-top:4px;">板块1 同步设置:FTP + AnythingLLM<br/>(扫码连接 + 手动输入)<br/>板块2 默认操作(默认夹+接收行为)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 面板二：手势状态机 ============ -->
+  <div style="background:#fff;border-radius:12px;padding:14px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.08);">
+    <div style="font-size:15px;font-weight:700;color:#0f766e;margin-bottom:10px;">② 收件箱手势状态机（左右滑 = 全部整理动作）</div>
+    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;justify-content:center;">
+      <!-- 白卡 -->
+      <div style="background:#ffffff;border:2px solid #94a3b8;border-radius:8px;padding:10px 14px;text-align:center;min-width:150px;">
+        <div style="font-weight:700;font-size:14px;">白卡 · 未标记</div>
+        <div style="font-size:12px;color:#6b7280;">排在前 · 接收时间倒序</div>
+      </div>
+      <!-- 左滑 -->
+      <div style="text-align:center;width:170px;">
+        <div style="font-size:12.5px;color:#dc2626;font-weight:600;">⬅ 左滑 = 删除</div>
+        <div style="font-size:11.5px;color:#6b7280;">进回收站收藏夹</div>
+      </div>
+      <!-- 回收站灰卡 -->
+      <div style="background:#f1f5f9;border:2px solid #94a3b8;border-radius:8px;padding:10px 14px;text-align:center;min-width:150px;">
+        <div style="font-weight:700;font-size:14px;color:#475569;">灰卡 · 回收站</div>
+        <div style="font-size:12px;color:#94a3b8;">沉底 · 不参与同步</div>
+      </div>
+      <!-- 撤销 -->
+      <div style="text-align:center;width:170px;">
+        <div style="font-size:12.5px;color:#2563eb;font-weight:600;">⬅/➡ 再滑 = 撤销</div>
+        <div style="font-size:11.5px;color:#6b7280;">恢复白卡回未标记区</div>
+      </div>
+      <!-- 收藏夹灰卡 -->
+      <div style="background:#f1f5f9;border:2px solid #94a3b8;border-radius:8px;padding:10px 14px;text-align:center;min-width:150px;">
+        <div style="font-weight:700;font-size:14px;color:#475569;">灰卡 · 已归入</div>
+        <div style="font-size:12px;color:#94a3b8;">沉底 · 标记时间倒序</div>
+      </div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;justify-content:center;margin-top:10px;">
+      <div style="text-align:center;width:170px;">
+        <div style="font-size:12.5px;color:#16a34a;font-weight:600;">➡ 右滑 = 归类</div>
+        <div style="font-size:11.5px;color:#6b7280;">底部弹收藏夹气泡</div>
+      </div>
+      <div style="background:#dcfce7;border:2px dashed #16a34a;border-radius:8px;padding:8px 12px;text-align:center;min-width:230px;">
+        <div style="font-weight:700;font-size:13px;color:#15803d;">收藏夹气泡(底部胶囊)</div>
+        <div style="font-size:12px;color:#4b5563;margin-top:2px;">名称+色点 · 常用置顶 · 点选即归入<br/>仅1个用户夹→直接归入 · 0个→引导新建</div>
+      </div>
+      <div style="font-size:12.5px;color:#6b7280;">—— 点击卡片亦可弹气泡改夹/归类</div>
+    </div>
+  </div>
+
+  <!-- ============ 面板三：同步映射 ============ -->
+  <div style="background:#fff;border-radius:12px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.08);">
+    <div style="font-size:15px;font-weight:700;color:#0f766e;margin-bottom:10px;">③ 收藏夹 → 双通道同步映射（同名结构自动建立）</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:stretch;">
+      <!-- 收藏夹 -->
+      <div style="flex:1 1 220px;background:#f8fafc;border:2px solid #cbd5e1;border-radius:8px;padding:10px;">
+        <div style="font-weight:700;font-size:13px;margin-bottom:6px;">Tab2 收藏夹</div>
+        <div style="font-size:12px;line-height:2;">
+          <div>🔵 工作</div>
+          <div>🟠 学习</div>
+          <div>🟢 积累</div>
+          <div>⚪ 回收站收藏夹 ✕不同步</div>
+        </div>
+      </div>
+      <!-- 箭头 -->
+      <div style="display:flex;flex-direction:column;justify-content:center;font-size:18px;color:#0d9488;padding:0 4px;">→</div>
+      <!-- FTP -->
+      <div style="flex:1 1 240px;background:#e0f2f1;border-radius:8px;padding:10px;">
+        <div style="font-weight:700;font-size:13px;color:#0f766e;margin-bottom:6px;">通道A · FTP → PC</div>
+        <div style="font-size:12px;line-height:1.8;font-family:Consolas,monospace;">
+          /默认收藏夹/ · 文件+.url<br/>/工作/ · 文件+.url<br/>/学习/ · 文件+.url
+        </div>
+        <div style="font-size:11.5px;color:#475569;margin-top:4px;">增量判定 · 失败重试 · 幂等覆盖</div>
+      </div>
+      <!-- 箭头 -->
+      <div style="display:flex;flex-direction:column;justify-content:center;font-size:18px;color:#0d9488;padding:0 4px;">→</div>
+      <!-- AnythingLLM -->
+      <div style="flex:1 1 300px;background:#e0f2fe;border-radius:8px;padding:10px;">
+        <div style="font-weight:700;font-size:13px;color:#0369a1;margin-bottom:6px;">通道B · AnythingLLM 本地知识库</div>
+        <div style="font-size:12px;line-height:1.9;">
+          <div>同名文件夹:custom-documents/工作/…(自动 ensure)</div>
+          <div>同名工作区:"工作" slug(自动 ensure)</div>
+          <div>文件 → 上传文件夹 + 嵌入同名工作区</div>
+          <div>链接 → upload-link + 加入同名工作区</div>
+        </div>
+        <div style="font-size:11.5px;color:#475569;margin-top:4px;">端点已具备:workspace/new · create-folder · upload/{folder} · upload-link</div>
+      </div>
+    </div>
+  </div>
+</div>
+</html>
