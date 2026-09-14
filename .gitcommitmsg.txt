@@ -1,7 +1,0 @@
-fix(v1.9) 阶段5回归:修复白灰同段header key冲突崩溃+Sync文案+端到端验证记录
-
-- BUG-白灰同段崩溃:Mark页白卡段与灰卡段同名分组头LazyColumn key冲突(header_2131427615 already used)导致白卡+灰卡同日共存即崩溃;sectionHeader key加段前缀(white/h)隔离
-- Sync页EMBEDDING文案「正在嵌入工作区」改为「待同步N项」(全部MARKED未运行时的误导文案)
-- 端到端真实服务器验证:分享example.com→静默接收→右滑归入工作→Sync一键同步→EXECUTED+serverLocation回写;服务器自动创建「工作」文件夹(A2落地);回收站不入队;失败可重试
-- 教训记录:Settings测试连接用表单临时值,须点「保存并返回」持久化(401实为Key未保存)
-- 单测154项全绿;截图与记录归档DOC/6.0V1.9实施记录/(v19_stage5_*.png + 04-阶段5记录)
