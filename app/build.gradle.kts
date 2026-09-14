@@ -7,7 +7,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization")
 }
 
-// Release 签名: 读取根目录 keystore.properties(本地生成,不入库); 缺失时仅提供 debug 构建
+// Release 绛惧悕: 璇诲彇鏍圭洰褰?keystore.properties(鏈湴鐢熸垚,涓嶅叆搴?; 缂哄け鏃朵粎鎻愪緵 debug 鏋勫缓
 val keystorePropsFile = rootProject.file("keystore.properties")
 val keystoreProps = Properties().apply {
     if (keystorePropsFile.exists()) {
@@ -23,8 +23,8 @@ android {
         applicationId = "com.anythingllm.importer"
         minSdk = 26
         targetSdk = 36
-        versionCode = 6
-        versionName = "1.7.0"
+        versionCode = 7
+        versionName = "1.9.0"
     }
 
     buildTypes {
@@ -34,7 +34,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            // 签名信息齐全时自动签名 Release
+            // 绛惧悕淇℃伅榻愬叏鏃惰嚜鍔ㄧ鍚?Release
             signingConfig = if (keystorePropsFile.exists()) {
                 signingConfigs.create("release") {
                     storeFile = rootProject.file(keystoreProps.getProperty("storeFile"))
@@ -77,10 +77,10 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.navigation:navigation-compose:2.8.5")
 
-    // 配置存储
+    // 閰嶇疆瀛樺偍
     implementation("androidx.datastore:datastore-preferences:1.1.1")
 
-    // 网络 (Retrofit + OkHttp + kotlinx.serialization)
+    // 缃戠粶 (Retrofit + OkHttp + kotlinx.serialization)
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-kotlinx-serialization:2.11.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
@@ -88,10 +88,10 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
 
-    // v1.3 FTP 同步客户端(资料库 → PC,commons-net 纯 Java 实现)
+    // v1.3 FTP 鍚屾瀹㈡埛绔?璧勬枡搴?鈫?PC,commons-net 绾?Java 瀹炵幇)
     implementation("commons-net:commons-net:3.11.1")
 
-    // v1.5 FTP 扫码连接: CameraX 预览/分析 + ZXing 解码
+    // v1.5 FTP 鎵爜杩炴帴: CameraX 棰勮/鍒嗘瀽 + ZXing 瑙ｇ爜
     implementation("androidx.camera:camera-camera2:1.4.1")
     implementation("androidx.camera:camera-lifecycle:1.4.1")
     implementation("androidx.camera:camera-view:1.4.1")
@@ -99,8 +99,9 @@ dependencies {
 
     debugImplementation("androidx.compose.ui:ui-tooling")
 
-    // 测试
+    // 娴嬭瘯
     testImplementation("junit:junit:4.13.2")
     testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
 }
+

@@ -45,6 +45,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.anythingllm.importer.AnythingLLMApp
+import com.anythingllm.importer.ui.settings.SettingsScreen
 import kotlinx.coroutines.launch
 
 /**
@@ -78,18 +79,21 @@ fun HomeScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        when (tab) {
-                            0 -> stringResource(R.string.home_tab_mark)
-                            1 -> stringResource(R.string.home_tab_to)
-                            2 -> stringResource(R.string.home_tab_sync)
-                            else -> stringResource(R.string.home_tab_settings)
-                        },
-                    )
-                },
-            )
+            // Settings 自带页内 TopAppBar,避免双标题
+            if (tab != 3) {
+                TopAppBar(
+                    title = {
+                        Text(
+                            when (tab) {
+                                0 -> stringResource(R.string.home_tab_mark)
+                                1 -> stringResource(R.string.home_tab_to)
+                                2 -> stringResource(R.string.home_tab_sync)
+                                else -> stringResource(R.string.home_tab_settings)
+                            },
+                        )
+                    },
+                )
+            }
         },
         bottomBar = {
             NavigationBar {
@@ -134,9 +138,9 @@ fun HomeScreen(
                     onOpenTo = { tab = 1 },
                     modifier = Modifier.padding(padding),
                 )
-                1 -> PlaceholderTab(stringResource(R.string.home_tab_to), Modifier.padding(padding))
+                1 -> ToScreen(modifier = Modifier.padding(padding))
                 2 -> PlaceholderTab(stringResource(R.string.home_tab_sync), Modifier.padding(padding))
-                else -> PlaceholderTab(stringResource(R.string.home_tab_settings), Modifier.padding(padding))
+                else -> SettingsScreen(onBack = { tab = 0 }, embedded = true, modifier = Modifier.padding(padding))
             }
         }
     }

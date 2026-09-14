@@ -31,7 +31,7 @@
 > 设计依据:`DOC/v1.9最终设计方案/MarkTo-V1.9-最终设计方案.md`(定稿,Q1–Q11 全部答复)。
 > 目标:把应用从「AnythingLLM 批量导入工具」重塑为「Mark To(mt)」——"分享即流式、滑一下即归类"的个人收藏流,
 > 配「收藏夹 → FTP / AnythingLLM 双通道同步」。未决项 A1–A8 已全部按推荐定稿,期间无需再确认。
-> 本区块随阶段推进追加;当前进度:**阶段 1(数据层)+ 阶段 2(Mark 页)完成**。
+> 本区块随阶段推进追加;当前进度:**阶段 1(数据层)+ 阶段 2(Mark 页)+ 阶段 3(To 页/Settings/目标改造/品牌更名)完成**。
 
 ### Added(阶段 1 · 数据层)
 - **收藏夹模型**(`data/favorite/FavoriteFolder.kt`):`FavoriteFolder(id, name, color ARGB, builtin, sortOrder, createdAt, isTrash, serverWorkspaceSlug)`;
@@ -78,6 +78,30 @@
 
 ### Verified(阶段 2)
 - `compileDebugKotlin` 通过(仅既有 deprecation 警告);`testDebugUnitTest` 全绿 180 项无回归。
+
+### Added(阶段 3 · To 收藏夹页 / Settings 重组 / 目标改造 / 品牌更名)
+- **To 页**(`ui/home/ToScreen.kt` + `ToViewModel.kt`,最终设计 §4.6–4.10):收藏夹列表(搜索 / 新建/重命名对话框含 12 色板 /
+  左滑删除右滑重命名 / 长按拖动排序 `detectDragGesturesAfterLongPress`);
+  删除迁移对话框(单选迁移目标夹或全部移入回收站,未选不可确认,Q5);
+  收藏夹详情(条目移出到其他夹 / 彻底删除);回收站详情(单个恢复 / 彻底删除 / 清空二次确认,A5:文件副本+条目一并删除)。
+- **Settings 重组**(`ui/settings/SettingsScreen.kt` 增加 `embedded` 参数,Tab 内不显示返回键):
+  「默认入库」卡片 →「默认操作」卡片——默认收藏夹(下拉,色点+名称)/ 静默接收 / 接收震动 / **WiFi 下自动同步**开关;
+  `SettingsViewModel` 注入 `favoriteRepository`,保存回写 `defaultFolderId` / `wifiAutoSync`。
+- **HomeScreen 接入**:Tab1=ToScreen(Tab 自带 Scaffold),Tab3=embedded SettingsScreen(隐藏外层 TopAppBar 避免双标题)。
+- **旧页面移除**:删除无引用的 `CollectScreen.kt / KnowledgeScreen.kt / LibraryScreen.kt / HomeViewModel.kt`。
+- **即时导入向导目标改造(A2 定稿)**:`ImportSessionViewModel`/`TargetScreen` 目标由「服务器文件夹+工作区」统一改为「收藏夹」——
+  加载本地收藏夹(离线可用),统一/逐项模式都只选收藏夹;执行时映射:服务器文件夹名=收藏夹名,
+  工作区=已回填 `serverWorkspaceSlug` 兜底 defaultWorkspace(阶段 4 Sync ensure 完善);新建收藏夹走本地创建。
+- **品牌更名(B 默认)**:`app_name = "Mark To"`,`versionName = 1.9.0`,`versionCode = 7`;首启引导文案更新为收藏夹体系
+  (Mark 流式收件箱 → To 收藏夹 → Sync 双通道同步)。
+
+### Notes(阶段 3)
+- A6 取舍:收藏夹改名**不联动服务器**,本地缓存目录沿用旧名(阶段 4 同步前需用户知晓此语义)。
+- 导入向导当前工作区映射为"回填 slug 兜底 defaultWorkspace",阶段 4 接入 Sync ensure 后自动建夹+同名工作区。
+- `build.gradle.kts` 经 PowerShell `Set-Content` 曾写入 UTF-8 BOM,已用无 BOM 写入方式修复(编码治理)。
+
+### Verified(阶段 3)
+- `compileDebugKotlin` 通过;`testDebugUnitTest` 全绿 180 项无回归(阶段 3 未新增测试类)。
 
 ---
 

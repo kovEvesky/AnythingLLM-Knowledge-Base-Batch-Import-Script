@@ -8,7 +8,9 @@ import android.content.pm.PackageManager
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,18 +18,22 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -52,6 +58,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -66,13 +73,61 @@ import com.anythingllm.importer.data.config.DuplicateAction
 import com.anythingllm.importer.data.config.FtpQrConfig
 import com.anythingllm.importer.data.config.ThemeMode
 import com.anythingllm.importer.data.config.FilenamePolicy
+import com.anythingllm.importer.data.favorite.FavoriteFolder
 import com.anythingllm.importer.domain.probe.ProbeResult
 import com.anythingllm.importer.ui.ftpqr.ScanFtpQrActivity
+
+/** 默认收藏夹下拉菜单:色点 + 名称;点击即选 */
+@Composable
+private fun FolderPickerMenu(
+    folders: List<FavoriteFolder>,
+    currentId: String,
+    onPick: (String) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        IconButton(onClick = { expanded = true }) {
+            Icon(Icons.Filled.KeyboardArrowDown, contentDescription = null)
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            folders.forEach { f ->
+                DropdownMenuItem(
+                    text = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                Modifier
+                                    .size(10.dp)
+                                    .background(Color(f.color), CircleShape),
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(f.name)
+                        }
+                    },
+                    onClick = {
+                        onPick(f.id)
+                        expanded = false
+                    },
+                    leadingIcon = {
+                        if (f.id == currentId) {
+                            Icon(
+                                Icons.Filled.Check,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                            )
+                        }
+                    },
+                )
+            }
+        }
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
+    embedded: Boolean = false,
+    modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = viewModel(factory = SettingsViewModel.factory()),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -118,12 +173,15 @@ fun SettingsScreen(
     }
 
     Scaffold(
+            modifier = modifier,
             topBar = {
                 TopAppBar(
-                    title = { Text("设置") },
+                    title = { Text(stringResource(R.string.home_tab_settings)) },
                     navigationIcon = {
-                        IconButton(onClick = onBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                        if (!embedded) {
+                            IconButton(onClick = onBack) {
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                            }
                         }
                     },
                 )
@@ -201,35 +259,37 @@ fun SettingsScreen(
                     Text(it, color = MaterialTheme.colorScheme.error)
                 }
 
-                // ===== v1.7 默认入库(零决策) =====
+                // ===== v1.9 板块2:默认操作(收藏夹体系替代 v1.7 零决策) =====
                 ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                     Column(
                         Modifier.padding(12.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         Text(
-                            stringResource(R.string.settings_default_inbox_section),
+                            stringResource(R.string.settings_default_ops_section),
                             style = MaterialTheme.typography.titleMedium,
                         )
                         Text(
-                            stringResource(R.string.settings_default_inbox_sub),
+                            stringResource(R.string.settings_default_ops_sub),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
+                        // 默认收藏夹(下拉选):气泡排序置顶 / 即时导入预填 / 批量标记目标(A1 定稿)
                         OutlinedTextField(
-                            value = state.defaultFolderName,
-                            onValueChange = viewModel::onDefaultFolderNameChange,
+                            value = state.favoriteFolders.firstOrNull { it.id == state.defaultFolderId }?.name
+                                ?: stringResource(R.string.settings_default_folder_none),
+                            onValueChange = {},
+                            readOnly = true,
                             modifier = Modifier.fillMaxWidth(),
-                            label = { Text(stringResource(R.string.settings_default_folder)) },
-                            supportingText = { Text(stringResource(R.string.settings_default_folder_hint)) },
-                            singleLine = true,
-                        )
-                        OutlinedTextField(
-                            value = state.defaultWorkspace,
-                            onValueChange = viewModel::onDefaultWorkspaceChange,
-                            modifier = Modifier.fillMaxWidth(),
-                            label = { Text(stringResource(R.string.settings_default_workspace)) },
-                            singleLine = true,
+                            label = { Text(stringResource(R.string.settings_default_folder_v19)) },
+                            supportingText = { Text(stringResource(R.string.settings_default_folder_v19_hint)) },
+                            trailingIcon = {
+                                FolderPickerMenu(
+                                    folders = state.favoriteFolders,
+                                    currentId = state.defaultFolderId,
+                                    onPick = viewModel::onDefaultFolderIdChange,
+                                )
+                            },
                         )
                         SwitchRow(
                             title = stringResource(R.string.settings_silent_receive),
@@ -242,6 +302,12 @@ fun SettingsScreen(
                             subtitle = stringResource(R.string.settings_haptic_sub),
                             checked = state.hapticOnReceive,
                             onChange = viewModel::onHapticChange,
+                        )
+                        SwitchRow(
+                            title = stringResource(R.string.settings_wifi_auto_sync),
+                            subtitle = stringResource(R.string.settings_wifi_auto_sync_sub),
+                            checked = state.wifiAutoSync,
+                            onChange = viewModel::onWifiAutoSyncChange,
                         )
                     }
                 }

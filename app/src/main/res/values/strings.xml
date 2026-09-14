@@ -2,7 +2,7 @@
 <!-- v1.4 UI-13:全部 UI 层用户可见文案资源化(2026-09-13)。
      规则:静态文案直接引用;带参数文案用 %1$s/%1$d 格式占位。ViewModel 错误文案暂留代码(需 stringProvider 注入,列为后续项)。 -->
 <resources>
-    <string name="app_name">AnythingLLM 批量导入</string>
+    <string name="app_name">Mark To</string>
 
     <!-- 通用 -->
     <string name="common_back">返回</string>
@@ -22,10 +22,10 @@
     <string name="home_tab_knowledge">知识库</string>
     <string name="home_tab_library">资料库</string>
     <string name="home_quick_import">立即导入(v1.0 即时流程)</string>
-    <string name="guide_title">欢迎使用 AnythingLLM 批量导入</string>
-    <string name="guide_step1">① 收集:从任意 App 分享文件/链接到本应用,自动暂存到「收集箱」</string>
-    <string name="guide_step2">② 整理:勾选条目,标记到服务器文件夹,或归入「资料库」</string>
-    <string name="guide_step3">③ 导入:连接服务器一键同步嵌入;未装服务器时可用 FTP 同步到 PC</string>
+    <string name="guide_title">欢迎使用 Mark To</string>
+    <string name="guide_step1">① 收集:从任意 App 分享文件/链接,自动进入「Mark」流式收件箱</string>
+    <string name="guide_step2">② 归类:左滑删除、右滑归入「To」收藏夹(工作/学习/积累/回收站)</string>
+    <string name="guide_step3">③ 同步:在「Sync」页一键同步到 AnythingLLM 服务器或 FTP,自动嵌入</string>
     <string name="guide_confirm">开始使用</string>
 
     <!-- 收集箱 Tab -->
@@ -287,6 +287,18 @@
     <string name="validation_reselect">重新选择</string>
     <string name="validation_next">下一步:选择目标</string>
     <string name="validation_storage_name">存储名: %1$s</string>
+    <string name="target_folder_v19">目标收藏夹</string>
+    <string name="target_folder_v19_hint">收藏夹是唯一目标:同步时自动在服务器创建同名文件夹与工作区</string>
+    <string name="target_folder_none">请选择收藏夹</string>
+
+    <!-- v1.9 Settings 板块2:默认操作 -->
+    <string name="settings_default_ops_section">默认操作</string>
+    <string name="settings_default_ops_sub">分享后的默认行为与归类偏好</string>
+    <string name="settings_default_folder_v19">默认收藏夹</string>
+    <string name="settings_default_folder_v19_hint">用于气泡置顶、即时导入预填与批量标记目标</string>
+    <string name="settings_default_folder_none">未设置(按气泡顺序)</string>
+    <string name="settings_wifi_auto_sync">WiFi 下自动同步</string>
+    <string name="settings_wifi_auto_sync_sub">连接 WiFi 时自动触发已配置通道的同步</string>
 
     <!-- ===== v1.9 Mark To 四 Tab ===== -->
     <string name="app_name_v19">Mark To</string>
@@ -335,6 +347,7 @@
     <string name="to_hint">长按拖动排序 · 左滑删除 · 右滑重命名</string>
     <string name="to_new_title">新建收藏夹</string>
     <string name="to_new_name_hint">收藏夹名称</string>
+    <string name="to_pick_color">选择颜色</string>
     <string name="to_save">保存</string>
     <string name="to_rename_title">重命名收藏夹</string>
     <string name="to_delete_title">删除收藏夹</string>
@@ -346,9 +359,19 @@
     <string name="to_trash_empty">回收站是空的</string>
     <string name="to_trash_clear">清空回收站</string>
     <string name="to_trash_clear_confirm">彻底删除回收站内全部条目与文件副本?此操作不可恢复。</string>
+    <string name="to_trash_restore">恢复到 Mark 待整理</string>
     <string name="to_detail_entry_move">移出到收藏夹</string>
     <string name="to_detail_entry_delete">彻底删除</string>
+    <string name="to_detail_empty">该收藏夹还没有内容</string>
     <string name="to_folder_deleted">已删除收藏夹</string>
+    <string name="to_folder_renamed">已重命名</string>
+    <string name="to_folder_created">已新建收藏夹</string>
+    <string name="to_entry_moved">已移出到「%1$s」</string>
+    <string name="to_entry_deleted">已彻底删除</string>
+    <string name="to_entry_restored">已恢复到 Mark</string>
+    <string name="to_trash_cleared">回收站已清空</string>
+    <string name="to_delete_confirm">删除</string>
+    <string name="to_cancel">取消</string>
     <string name="to_count_suffix">%1$d 条</string>
     <string name="to_folder_exists">已存在同名收藏夹</string>
 

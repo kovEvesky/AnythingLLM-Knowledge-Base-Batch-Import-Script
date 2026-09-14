@@ -8,9 +8,9 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.anythingllm.importer.AnythingLLMApp
-import com.anythingllm.importer.data.api.dto.CreateFolderRequest
 import com.anythingllm.importer.data.api.dto.WorkspaceDto
 import com.anythingllm.importer.data.config.AppConfig
+import com.anythingllm.importer.data.favorite.FavoriteFolder
 import com.anythingllm.importer.data.import.UriFileBodyProvider
 import com.anythingllm.importer.data.log.ImportLogEntry
 import com.anythingllm.importer.domain.error.toUserMessage
@@ -36,7 +36,7 @@ import kotlinx.coroutines.launch
 /**
  * 导入会话 ViewModel(阶段 3):
  * 目标选择(统一/逐项)→ 启动导入引擎 → 进度/重复提问/暂停取消。
- * 与选择/校验页共享 SELECT 路由的 backStackEntry 作用域。
+ * v1.9 目标统一为"收藏夹"(A2 定稿:同步时自动 ensure 服务器文件夹+工作区,导入向导不再直接选服务器目标)。
  */
 class ImportSessionViewModel(
     private val app: AnythingLLMApp,
@@ -46,19 +46,18 @@ class ImportSessionViewModel(
     data class UiState(
         val loaded: Boolean = false,
         val loadError: String? = null,
-        val folders: List<String> = emptyList(),
-        val workspaces: List<WorkspaceDto> = emptyList(),
+        /** v1.9 本地收藏夹(目标唯一概念) */
+        val favoriteFolders: List<FavoriteFolder> = emptyList(),
         val mode: ImportMode = ImportMode.UNIFIED,
-        val unifiedFolder: String = "custom-documents",
-        val unifiedWorkspace: String = "",
-        val workspaceFilter: String = "",
-        // uriString -> (folder, workspaceSlug);逐项模式
-        val perItem: Map<String, Pair<String, String>> = emptyMap(),
+        /** 统一模式:收藏夹 id */
+        val unifiedFolderId: String = "",
+        // uriString -> 收藏夹 id;逐项模式
+        val perItem: Map<String, String> = emptyMap(),
         // 导入运行
         val runState: ImportRunState? = null,
         val starting: Boolean = false,
         val error: String? = null,
-        // 新建文件夹对话框
+        // 新建收藏夹对话框(本地创建,复用 To 页语义)
         val showCreateFolder: Boolean = false,
         val createFolderName: String = "",
         val createFolderError: String? = null,
@@ -85,27 +84,14 @@ class ImportSessionViewModel(
         if (_uiState.value.loaded) return
         viewModelScope.launch {
             val cfg = repository.snapshot()
-            val api = buildApi(cfg)
-            runCatching {
-                val workspaces = api.workspaces().workspaces
-                val folders = api.documents().localFiles?.items.orEmpty()
-                    .filter { it.type == "folder" }
-                    .map { it.name }
-                    .ifEmpty { listOf("custom-documents") }
-                val defaultWs = workspaces.firstOrNull {
-                    it.slug == cfg.defaultWorkspace || it.name == cfg.defaultWorkspace
-                } ?: workspaces.firstOrNull()
-                _uiState.update {
-                    it.copy(
-                        loaded = true,
-                        folders = folders,
-                        workspaces = workspaces,
-                        unifiedFolder = if ("custom-documents" in folders) "custom-documents" else folders.first(),
-                        unifiedWorkspace = defaultWs?.slug ?: "",
-                    )
-                }
-            }.onFailure { e ->
-                _uiState.update { it.copy(loadError = e.toUserMessage()) }
+            val folders = app.favoriteRepository.userFolders()
+            val defaultId = cfg.defaultFolderId.takeIf { id -> folders.any { it.id == id } }
+            _uiState.update {
+                it.copy(
+                    loaded = true,
+                    favoriteFolders = folders,
+                    unifiedFolderId = defaultId ?: folders.firstOrNull()?.id ?: "",
+                )
             }
         }
     }
@@ -113,26 +99,16 @@ class ImportSessionViewModel(
     // ===== 目标选择 =====
 
     fun setMode(mode: ImportMode) = _uiState.update { it.copy(mode = mode) }
-    fun setUnifiedFolder(folder: String) = _uiState.update { it.copy(unifiedFolder = folder) }
-    fun setUnifiedWorkspace(slug: String) = _uiState.update { it.copy(unifiedWorkspace = slug) }
-    fun setWorkspaceFilter(v: String) = _uiState.update { it.copy(workspaceFilter = v) }
+    fun setUnifiedFolderId(folderId: String) = _uiState.update { it.copy(unifiedFolderId = folderId) }
 
-    fun setPerItemFolder(uriString: String, folder: String) = _uiState.update {
-        val cur = it.perItem[uriString] ?: (it.unifiedFolder to it.unifiedWorkspace)
-        it.copy(perItem = it.perItem + (uriString to (folder to cur.second)))
+    fun setPerItemFolderId(uriString: String, folderId: String) = _uiState.update {
+        it.copy(perItem = it.perItem + (uriString to folderId))
     }
 
-    fun setPerItemWorkspace(uriString: String, slug: String) = _uiState.update {
-        val cur = it.perItem[uriString] ?: (it.unifiedFolder to it.unifiedWorkspace)
-        it.copy(perItem = it.perItem + (uriString to (cur.first to slug)))
-    }
+    fun folderNameOf(folderId: String): String =
+        _uiState.value.favoriteFolders.firstOrNull { it.id == folderId }?.name ?: folderId
 
-    fun workspaceNameOf(slug: String): String {
-        val s = _uiState.value
-        return s.workspaces.firstOrNull { it.slug == slug }?.name ?: slug
-    }
-
-    // ===== 新建文件夹 =====
+    // ===== 新建收藏夹(本地,复用 FavoriteRepository) =====
 
     fun showCreateFolderDialog() = _uiState.update {
         it.copy(showCreateFolder = true, createFolderName = "", createFolderError = null)
@@ -143,26 +119,17 @@ class ImportSessionViewModel(
     fun createFolder() {
         val name = _uiState.value.createFolderName.trim()
         if (name.isBlank()) {
-            _uiState.update { it.copy(createFolderError = "文件夹名不能为空") }
+            _uiState.update { it.copy(createFolderError = "收藏夹名不能为空") }
             return
         }
-        viewModelScope.launch {
-            val cfg = repository.snapshot()
-            val api = buildApi(cfg)
-            runCatching {
-                val resp = api.createFolder(CreateFolderRequest(name))
-                if (!resp.success) throw IOException(resp.message ?: "创建文件夹失败")
-                _uiState.update {
-                    it.copy(
-                        showCreateFolder = false,
-                        createFolderError = null,
-                        folders = it.folders + name,
-                        unifiedFolder = name,
-                    )
-                }
-            }.onFailure { e ->
-                _uiState.update { it.copy(createFolderError = e.toUserMessage()) }
-            }
+        val f = app.favoriteRepository.createFolder(name, 0xFF14B8A6)
+        _uiState.update {
+            it.copy(
+                showCreateFolder = false,
+                createFolderError = null,
+                favoriteFolders = app.favoriteRepository.userFolders(),
+                unifiedFolderId = f.id,
+            )
         }
     }
 
@@ -183,8 +150,6 @@ class ImportSessionViewModel(
             engine = eng
             eng.launch(viewModelScope, targets, ::askDuplicate)
             viewModelScope.launch {
-                // 收集引擎状态时保留 VM 侧的 duplicateQuestion(引擎状态本身恒为 null,
-                // 直接整体覆盖会把 askDuplicate 刚写入的问询状态冲掉——已实测复现)
                 eng.state.collect { run ->
                     writeImportLogIfNeeded(run)
                     _uiState.update {
@@ -196,28 +161,35 @@ class ImportSessionViewModel(
         }
     }
 
+    /**
+     * 收藏夹 → 导入目标映射(A2 定稿):文件夹名 = 收藏夹名;工作区 =
+     * 已回填的服务器 slug(阶段 4 ensure 写入)兜底 defaultWorkspace。
+     */
     private fun buildTargets(s: UiState, cfg: AppConfig): List<ImportTarget>? {
-        if (s.unifiedWorkspace.isBlank()) {
-            _uiState.update { it.copy(error = "请选择目标工作区") }
+        if (s.unifiedFolderId.isBlank()) {
+            _uiState.update { it.copy(error = "请选择目标收藏夹") }
             return null
         }
-        val targets = passedFiles.map { pf ->
-            val (folder, ws) = if (s.mode == ImportMode.UNIFIED) {
-                s.unifiedFolder to s.unifiedWorkspace
+        val targets = passedFiles.mapNotNull { pf ->
+            val folderId = if (s.mode == ImportMode.UNIFIED) {
+                s.unifiedFolderId
             } else {
-                s.perItem[pf.file.uriString] ?: (s.unifiedFolder to s.unifiedWorkspace)
+                s.perItem[pf.file.uriString] ?: s.unifiedFolderId
             }
+            val folder = app.favoriteRepository.folderById(folderId) ?: return@mapNotNull null
             ImportTarget(
                 uriString = pf.file.uriString,
                 displayName = pf.file.displayName,
                 storageName = pf.storageName,
                 sizeBytes = pf.file.sizeBytes,
-                folder = folder,
-                workspaceSlug = ws,
+                folder = folder.name,
+                workspaceSlug = folder.serverWorkspaceSlug
+                    ?: cfg.defaultWorkspace.trim()
+                    ?: "",
             )
         }
-        if (targets.any { it.folder.isBlank() || it.workspaceSlug.isBlank() }) {
-            _uiState.update { it.copy(error = "逐项模式:请为每个文件选择文件夹与工作区") }
+        if (targets.size != passedFiles.size) {
+            _uiState.update { it.copy(error = "请为每个文件选择目标收藏夹") }
             return null
         }
         return targets

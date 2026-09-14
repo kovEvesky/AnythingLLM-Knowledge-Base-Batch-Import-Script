@@ -14,6 +14,8 @@ import com.anythingllm.importer.data.config.ThemeMode
 import com.anythingllm.importer.data.config.ConfigRepository
 import com.anythingllm.importer.data.config.DuplicateAction
 import com.anythingllm.importer.data.config.FilenamePolicy
+import com.anythingllm.importer.data.favorite.FavoriteFolder
+import com.anythingllm.importer.data.favorite.FavoriteRepository
 import com.anythingllm.importer.domain.probe.ConnectionProbe
 import com.anythingllm.importer.domain.probe.ProbeResult
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,6 +32,7 @@ import kotlinx.coroutines.launch
 class SettingsViewModel(
     private val repository: ConfigRepository,
     private val probe: ConnectionProbe,
+    private val favoriteRepository: FavoriteRepository,
 ) : ViewModel() {
 
     data class UiState(
@@ -71,6 +74,10 @@ class SettingsViewModel(
         val hapticOnReceive: Boolean = true,
         val lastMarkFolder: String = "",
         val lastMarkWorkspace: String = "",
+        // v1.9 收藏夹体系
+        val favoriteFolders: List<FavoriteFolder> = emptyList(),
+        val defaultFolderId: String = "",
+        val wifiAutoSync: Boolean = false,
         // 交互
         val loaded: Boolean = false,
         val testing: Boolean = false,
@@ -119,6 +126,9 @@ class SettingsViewModel(
                 hapticOnReceive = cfg.hapticOnReceive,
                 lastMarkFolder = cfg.lastMarkFolder,
                 lastMarkWorkspace = cfg.lastMarkWorkspace,
+                favoriteFolders = favoriteRepository.userFolders(),
+                defaultFolderId = cfg.defaultFolderId,
+                wifiAutoSync = cfg.wifiAutoSync,
                 loaded = true,
             )
         }
@@ -157,6 +167,8 @@ class SettingsViewModel(
     fun onDefaultFolderNameChange(v: String) = _uiState.update { it.copy(defaultFolderName = v) }
     fun onSilentReceiveChange(v: Boolean) = _uiState.update { it.copy(silentReceive = v) }
     fun onHapticChange(v: Boolean) = _uiState.update { it.copy(hapticOnReceive = v) }
+    fun onDefaultFolderIdChange(v: String) = _uiState.update { it.copy(defaultFolderId = v) }
+    fun onWifiAutoSyncChange(v: Boolean) = _uiState.update { it.copy(wifiAutoSync = v) }
 
     fun consumeSaved() = _uiState.update { it.copy(saved = false) }
 
@@ -242,6 +254,8 @@ class SettingsViewModel(
         hapticOnReceive = hapticOnReceive,
         lastMarkFolder = lastMarkFolder,
         lastMarkWorkspace = lastMarkWorkspace,
+        defaultFolderId = defaultFolderId,
+        wifiAutoSync = wifiAutoSync,
     )
 
     companion object {
@@ -249,7 +263,7 @@ class SettingsViewModel(
         fun factory(): ViewModelProvider.Factory {
             val app = LocalContext.current.applicationContext as AnythingLLMApp
             return viewModelFactory { initializer {
-                SettingsViewModel(app.configRepository, app.connectionProbe)
+                SettingsViewModel(app.configRepository, app.connectionProbe, app.favoriteRepository)
             } }
         }
     }
